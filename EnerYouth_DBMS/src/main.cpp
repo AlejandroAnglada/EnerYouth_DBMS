@@ -4,7 +4,6 @@
 #include<sql.h>
 #include<iostream>
 
-// hStmt es un handle (manejador) que usa ODBC para representar una sentencia SQL preparada o ejecutada
 void borrarTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
     SQLExecDirect(handler, (SQLWCHAR*)"SAVEPOINT borrarTablas", SQL_NTS);
 
