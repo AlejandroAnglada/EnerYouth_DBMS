@@ -165,6 +165,8 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
 }
 
 int main(int argc, char ** argv){
+    // PARA COMPILAR: "C:\mingw64\bin\x86_64-w64-mingw32-g++.exe" main.cpp -o app.exe -lodbc32 (luego se quita)
+
     std::string user, pwd;
     int opcion;
 
@@ -246,79 +248,4 @@ int main(int argc, char ** argv){
     SQLDisconnect(conexion);
 
     return 0;
-    /*
-    std::string user, pwd;
-    std::string dsn = "practbd";
-
-    std::cout << "Awaiting credentials...\nUser: ";
-    std::cin >> user;
-    std::cout << "Password: ";
-    std::cin >> pwd;
-
-    SQLHENV entorno = SQL_NULL_HENV;
-    SQLHDBC conexion = SQL_NULL_HDBC;
-    SQLHSTMT handler = SQL_NULL_HSTMT;
-    SQLRETURN ret;
-
-    // Crear entorno y atributo ODBC
-    SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &entorno);
-    SQLSetEnvAttr(entorno, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0);
-
-    // Crear conexión
-    SQLAllocHandle(SQL_HANDLE_DBC, entorno, &conexion);
-
-    // Conectar usando la versión ANSI (A)
-    ret = SQLConnectA(conexion,
-                      (SQLCHAR*)dsn.c_str(), SQL_NTS,
-                      (SQLCHAR*)user.c_str(), SQL_NTS,
-                      (SQLCHAR*)pwd.c_str(), SQL_NTS);
-
-    if (!SQL_SUCCEEDED(ret)) {
-        // Obtener diagnóstico y salir
-        SQLCHAR sqlState[6] = {0}, msg[1024] = {0};
-        SQLINTEGER native;
-        SQLSMALLINT len;
-        if (SQLGetDiagRecA(SQL_HANDLE_DBC, conexion, 1, sqlState, &native, msg, sizeof(msg), &len) == SQL_SUCCESS) {
-            std::cerr << "Error al conectar.\nSQLSTATE: " << sqlState << "\nMensaje: " << msg << "\n";
-        } else {
-            std::cerr << "Error al conectar: SQLConnectA devolvió código no exitoso.\n";
-        }
-
-        // limpiar
-        if (conexion != SQL_NULL_HDBC) SQLFreeHandle(SQL_HANDLE_DBC, conexion);
-        if (entorno != SQL_NULL_HENV) SQLFreeHandle(SQL_HANDLE_ENV, entorno);
-        return -1;
-    }
-
-    std::cout << "✅ Conectado correctamente al DSN " << dsn << "\n";
-
-    // Ahora asignamos el statement handle (IMPORTANTE)
-    ret = SQLAllocHandle(SQL_HANDLE_STMT, conexion, &handler);
-    if (!SQL_SUCCEEDED(ret)) {
-        std::cerr << "No se pudo asignar SQLHSTMT\n";
-        SQLDisconnect(conexion);
-        SQLFreeHandle(SQL_HANDLE_DBC, conexion);
-        SQLFreeHandle(SQL_HANDLE_ENV, entorno);
-        return -1;
-    }
-
-    // Prueba simple: listar tablas o ejecutar un SELECT que exista
-    ret = SQLExecDirectA(handler, (SQLCHAR*)"SELECT 1 FROM DUAL", SQL_NTS);
-    if (SQL_SUCCEEDED(ret)) {
-        std::cout << "La consulta de prueba funcionó.\n";
-    } else {
-        SQLCHAR state[6] = {0}, msg2[1024] = {0};
-        SQLINTEGER native2;
-        SQLSMALLINT len2;
-        SQLGetDiagRecA(SQL_HANDLE_STMT, handler, 1, state, &native2, msg2, sizeof(msg2), &len2);
-        std::cerr << "Error al ejecutar SELECT de prueba.\nSQLSTATE: " << state << "\nMensaje: " << msg2 << "\n";
-    }
-
-    // Liberar y desconectar
-    if (handler != SQL_NULL_HSTMT) SQLFreeHandle(SQL_HANDLE_STMT, handler);
-    SQLDisconnect(conexion);
-    SQLFreeHandle(SQL_HANDLE_DBC, conexion);
-    SQLFreeHandle(SQL_HANDLE_ENV, entorno);
-
-    return 0;*/
 }
