@@ -5,10 +5,51 @@
 #include<iostream>
 
 void mostrarContenidoTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
-    SQLExecDirectA(handler, (SQLCHAR*) "SELECT * FROM Stock;", SQL_NTS);
-    SQLExecDirectA(handler, (SQLCHAR*) "SELECT * FROM Pedido;", SQL_NTS);
-    SQLExecDirectA(handler, (SQLCHAR*) "SELECT * FROM Detalle_Pedido;", SQL_NTS);
-    std::cout << "Contenido de las tablas mostrado correctamente.\n";
+    // Se usa SQLFetch y SQLGetData para leer fila por fila los resultados
+    // Funcionamiento: se ejecuta el fetch de la siguiente fila del resultado de la consulta que se ejecutó con SQLExecDirectA y 
+    // devuelve SQL_SUCCESS si hay fila disponible, SQL_NO_DATA si ya no hay más filas.Con el while se recorren todas las filas 
+    // hasta el final.
+    // SQLGetData(handler, columna, tipo, buffer, tamaño, indicador) recupera el valor de una columna específica de la fila actual.
+    // Parámetros:
+    // - handler
+    // - columna: número de columna. En el caso de Stock, 1 para Cproducto, 2 para Cantidad
+    // - tipo: tipo de datos en el buffer (SQL_C_LONG para enteros, SQL_C_CHAR para strings, etc.)
+    // - buffer: dirección de memoria donde se guarda el valor de esa columna
+    // - tamaño: tamaño del buffer (importante para strings)
+    // - indicador: puntero a una variable que indica si el valor es NULL (puede ser NULL si no se quiere comprobar)
+    
+    // Tabla Stock
+    SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Stock;", SQL_NTS);
+    std::cout << "--Tabla Stock:--\n";
+    SQLINTEGER cproducto, cantidad;
+    while (SQLFetch(handler) == SQL_SUCCESS) {
+        SQLGetData(handler, 1, SQL_C_LONG, &cproducto, 0, NULL);
+        SQLGetData(handler, 2, SQL_C_LONG, &cantidad, 0, NULL);
+        std::cout << cproducto << "\t" << cantidad << "\n";
+    }
+
+    // Tabla Pedido
+    SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Pedido;", SQL_NTS);
+    std::cout << "\n--Tabla Pedido:--\n";
+    SQLINTEGER cpedido, ccliente;
+    char fecha[11];
+    while (SQLFetch(handler) == SQL_SUCCESS) {
+        SQLGetData(handler, 1, SQL_C_LONG, &cpedido, 0, NULL);
+        SQLGetData(handler, 2, SQL_C_LONG, &ccliente, 0, NULL);
+        SQLGetData(handler, 3, SQL_C_CHAR, fecha, sizeof(fecha), NULL);
+        std::cout << cpedido << "\t" << ccliente << "\t" << fecha << "\n";
+    }
+
+    // Tabla Detalle_Pedido
+    SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Detalle_Pedido;", SQL_NTS);
+    std::cout << "\n--Tabla Detalle_Pedido:--\n";
+    SQLINTEGER dp_cpedido, dp_cproducto, dp_cantidad;
+    while (SQLFetch(handler) == SQL_SUCCESS) {
+        SQLGetData(handler, 1, SQL_C_LONG, &dp_cpedido, 0, NULL);
+        SQLGetData(handler, 2, SQL_C_LONG, &dp_cproducto, 0, NULL);
+        SQLGetData(handler, 3, SQL_C_LONG, &dp_cantidad, 0, NULL);
+        std::cout << dp_cpedido << "\t" << dp_cproducto << "\t" << dp_cantidad << "\n";
+    }
 }
 
 void borrarTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
@@ -19,6 +60,8 @@ void borrarTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Stock;", SQL_NTS);
 
     std::cout << "Tablas borradas correctamente.\n";
+
+    SQLTransact(entorno, conexion, SQL_COMMIT);
 }
 
 void crearTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
@@ -39,11 +82,15 @@ void crearTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
 
     SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Detalle_Pedido ("
-        "Cpedido FOREIGN KEY REFERENCES Pedido(Cpedido),"
-        "Cproducto FOREIGN KEY REFERENCES Stock(Cproducto),"
         "Cantidad INT,"
-        "PRIMARY KEY (Cpedido, Cproducto)"
+        "Cproducto INT,"
+        "Cantidad INT,"
+        "PRIMARY KEY (Cpedido, Cproducto),"
+        "FOREIGN KEY (Cpedido) REFERENCES Pedido(Cpedido),"
+        "FOREIGN KEY (Cproducto) REFERENCES Stock(Cproducto)"
         ");", SQL_NTS);
+
+    SQLTransact(entorno, conexion, SQL_COMMIT);
 }
 
 void insertarTuplas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
@@ -61,6 +108,8 @@ void insertarTuplas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
     SQLExecDirectA(handler, (SQLCHAR*) "INSERT INTO Stock (Cproducto, Cantidad) VALUES (10, 550);", SQL_NTS);
 
     std::cout << "Datos insertados correctamente.\n";
+
+    SQLTransact(entorno, conexion, SQL_COMMIT);
 }
 
 void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {    
@@ -77,8 +126,12 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
     std::cout << "Ingrese el producto: ";
     std::cin >> cproducto;
 
-    SQLExecDirectA(handler, (SQLCHAR*)
-    "INSERT INTO Pedido (Cpedido, Ccliente, Fecha_pedido) VALUES (cpedido, ccliente, fecha);", SQL_NTS);
+    char cadena[256];
+    sprintf(cadena, "INSERT INTO Pedido (Cpedido, Ccliente, Fecha_pedido) VALUES (%d, %d, '%s');", cpedido, ccliente, fecha.c_str());
+
+    SQLExecDirectA(handler, (SQLCHAR*) cadena, SQL_NTS);
+
+    SQLTransact(entorno, conexion, SQL_COMMIT);
 
     do {
         std::cout << "\n===== MENU ALTA PEDIDO =====\n";
@@ -122,6 +175,8 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
                 } else {
                     std::cout << "No hay stock disponible para este producto.\n";
                 }
+
+                SQLTransact(entorno, conexion, SQL_COMMIT);
                 
                 std::cout << "Contenido actual de las tablas:\n";
                 mostrarContenidoTablas(handler, entorno, conexion);
@@ -135,6 +190,8 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
                 SQLExecDirectA(handler, (SQLCHAR*)
                 "DELETE FROM Detalle_Pedido WHERE Cpedido = cpedido;", SQL_NTS);
 
+                SQLTransact(entorno, conexion, SQL_COMMIT);
+
                 std::cout << "Contenido actual de las tablas:\n";
                 mostrarContenidoTablas(handler, entorno, conexion);
             break;
@@ -146,6 +203,8 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
 
                 SQLExecDirectA(handler, (SQLCHAR*)
                 "DELETE FROM Pedido WHERE Cpedido = cpedido;", SQL_NTS);
+
+                SQLTransact(entorno, conexion, SQL_COMMIT);
 
                 std::cout << "Contenido actual de las tablas:\n";
                 mostrarContenidoTablas(handler, entorno, conexion);
@@ -176,7 +235,7 @@ int main(int argc, char ** argv){
     std::cout << "Esperando credenciales...\n";
     std::cout << "Usuario: ";
     std::cin >> user;
-    std::cout << "Contraseña: ";
+    std::cout << "Password: ";
     std::cin >> pwd;
 
     // Inicializamos el entorno y la conexión:
@@ -189,13 +248,15 @@ int main(int argc, char ** argv){
     SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &entorno);                  // Primero a null
     SQLSetEnvAttr(entorno, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0); // Establecemos los atributos de la conexión
     SQLAllocHandle(SQL_HANDLE_DBC, entorno, &conexion);                         // Reinicializamos la conexión, ya puestos dichos atributos
-    
+
     // Intentamos conectar con las credenciales dadas:
 
     SQLRETURN validez = SQLConnectA( conexion, 
                                     (SQLCHAR*)dsn.c_str(), dsn.size(),  
                                     (SQLCHAR*)user.c_str(), user.size(),  
                                     (SQLCHAR*)pwd.c_str(), pwd.size());
+                                    
+    SQLAllocHandle(SQL_HANDLE_STMT, conexion, &handler);                        // Inicializamos el handler para las sentencias
 
     // Comprobamos si la conexión ha sido exitosa:
 
