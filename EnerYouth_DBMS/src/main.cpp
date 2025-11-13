@@ -53,8 +53,6 @@ void mostrarContenidoTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion)
 }
 
 void borrarTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
-    SQLExecDirectA(handler, (SQLCHAR*) "SAVEPOINT borrarTablas", SQL_NTS);
-
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Detalle_Pedido;", SQL_NTS);
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Pedido;", SQL_NTS);
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Stock;", SQL_NTS);
@@ -65,8 +63,6 @@ void borrarTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
 }
 
 void crearTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
-    SQLExecDirectA(handler, (SQLCHAR*) "SAVEPOINT crearTablas", SQL_NTS);
-
     SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Stock ("
         "Cproducto INT PRIMARY KEY NOT NULL,"
@@ -96,8 +92,6 @@ void crearTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
 }
 
 void insertarTuplas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
-    SQLExecDirectA(handler, (SQLCHAR*) "SAVEPOINT insertarTuplas", SQL_NTS);
-
     SQLExecDirectA(handler, (SQLCHAR*) "INSERT INTO Stock (Cproducto, Cantidad) VALUES (1, 100);", SQL_NTS);
     SQLExecDirectA(handler, (SQLCHAR*) "INSERT INTO Stock (Cproducto, Cantidad) VALUES (2, 150);", SQL_NTS);
     SQLExecDirectA(handler, (SQLCHAR*) "INSERT INTO Stock (Cproducto, Cantidad) VALUES (3, 200);", SQL_NTS);
@@ -176,37 +170,37 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
                 }
 
                 int cantidad_disponible = 0;
-                
+
                 if (SQLFetch(handler_select) == SQL_SUCCESS) {
                     SQLGetData(handler_select, 1, SQL_C_LONG, &cantidad_disponible, 0, NULL);
-                } else {
-                    std::cout << "No se ha podido obtener la cantidad disponible\n";
-                }
 
-                SQLCloseCursor(handler_select); 
+                    SQLCloseCursor(handler_select); 
 
-                if (cantidad_disponible > 0) {
-                    int cantidad_solicitada;
-                    std::cout << "Ingrese la cantidad solicitada: ";
-                    std::cin >> cantidad_solicitada;
+                    if (cantidad_disponible > 0) {
+                        int cantidad_solicitada;
+                        std::cout << "Ingrese la cantidad solicitada: ";
+                        std::cin >> cantidad_solicitada;
 
-                    if (cantidad_solicitada <= cantidad_disponible) {
-                        char cadena2[256];
-                        sprintf(cadena2, "INSERT INTO Detalle_Pedido (Cpedido, Cproducto, Cantidad) VALUES (%d, %d, %d);", cpedido, cproducto, cantidad_solicitada);
-                        SQLExecDirectA(handler_insert, (SQLCHAR*)cadena2, SQL_NTS);
+                        if (cantidad_solicitada <= cantidad_disponible) {
+                            char cadena2[256];
+                            sprintf(cadena2, "INSERT INTO Detalle_Pedido (Cpedido, Cproducto, Cantidad) VALUES (%d, %d, %d);", cpedido, cproducto, cantidad_solicitada);
+                            SQLExecDirectA(handler_insert, (SQLCHAR*)cadena2, SQL_NTS);
 
-                        // Actualizamos Stock restando la cantidad solicitada
-                        char cadenaCant[256];
-                        sprintf(cadenaCant, "UPDATE Stock SET Cantidad = Cantidad - %d WHERE Cproducto = %d", cantidad_solicitada, cproducto);
-                        SQLExecDirectA(handler_update, (SQLCHAR*)cadenaCant, SQL_NTS);
+                            // Actualizamos Stock restando la cantidad solicitada
+                            char cadenaCant[256];
+                            sprintf(cadenaCant, "UPDATE Stock SET Cantidad = Cantidad - %d WHERE Cproducto = %d", cantidad_solicitada, cproducto);
+                            SQLExecDirectA(handler_update, (SQLCHAR*)cadenaCant, SQL_NTS);
 
-                        std::cout << "Detalle de producto añadido correctamente.\n";
+                            std::cout << "Detalle de producto añadido correctamente.\n";
 
+                        } else {
+                            std::cout << "No hay suficiente stock disponible.\n";
+                        }
                     } else {
-                        std::cout << "No hay suficiente stock disponible.\n";
+                        std::cout << "No hay stock disponible para este producto.\n";
                     }
                 } else {
-                    std::cout << "No hay stock disponible para este producto.\n";
+                    std::cout << "No se ha podido obtener la cantidad disponible\n";
                 }
 
                 SQLFreeHandle(SQL_HANDLE_STMT, handler_select);
@@ -220,8 +214,6 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
             }
             break;
             case 2:
-                SQLExecDirectA(handler, (SQLCHAR*) "SAVEPOINT darDeAltaPedido_eliminarDetalle", SQL_NTS);
-
                 SQLExecDirectA(handler, (SQLCHAR*)
                 "SELECT Cpedido FROM Detalle_Pedido WHERE Cproducto = cproducto;", SQL_NTS);
 
@@ -234,8 +226,6 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
                 mostrarContenidoTablas(handler, entorno, conexion);
             break;
             case 3:
-                SQLExecDirectA(handler, (SQLCHAR*) "SAVEPOINT darDeAltaPedido_cancelarPedido", SQL_NTS);
-
                 SQLExecDirectA(handler, (SQLCHAR*)
                 "DELETE FROM Detalle_Pedido WHERE Cpedido = cpedido;", SQL_NTS);
 
