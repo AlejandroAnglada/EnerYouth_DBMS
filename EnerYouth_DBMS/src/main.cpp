@@ -36,7 +36,7 @@ void mostrarContenidoTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion)
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_LONG, &cpedido, 0, NULL);
         SQLGetData(handler, 2, SQL_C_LONG, &ccliente, 0, NULL);
-        SQLGetData(handler, 3, SQL_C_CHAR, fecha, sizeof(fecha), NULL);
+        SQLGetData(handler, 3, SQL_C_CHAR, &fecha, sizeof(fecha), NULL);
         std::cout << cpedido << "\t" << ccliente << "\t" << fecha << "\n";
     }
 
@@ -59,7 +59,7 @@ void borrarTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Pedido;", SQL_NTS);
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Stock;", SQL_NTS);
 
-    std::cout << "Tablas borradas correctamente.\n";
+    std::cout << "\nTablas borradas correctamente.\n";
 
     SQLTransact(entorno, conexion, SQL_COMMIT);
 }
@@ -82,13 +82,15 @@ void crearTablas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
 
     SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Detalle_Pedido ("
-        "Cantidad INT,"
+        "Cpedido INT,"
         "Cproducto INT,"
         "Cantidad INT,"
         "PRIMARY KEY (Cpedido, Cproducto),"
         "FOREIGN KEY (Cpedido) REFERENCES Pedido(Cpedido),"
         "FOREIGN KEY (Cproducto) REFERENCES Stock(Cproducto)"
         ");", SQL_NTS);
+
+    std::cout << "\nTablas creadas correctamente.\n";
 
     SQLTransact(entorno, conexion, SQL_COMMIT);
 }
@@ -107,7 +109,7 @@ void insertarTuplas(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
     SQLExecDirectA(handler, (SQLCHAR*) "INSERT INTO Stock (Cproducto, Cantidad) VALUES (9, 500);", SQL_NTS);
     SQLExecDirectA(handler, (SQLCHAR*) "INSERT INTO Stock (Cproducto, Cantidad) VALUES (10, 550);", SQL_NTS);
 
-    std::cout << "Datos insertados correctamente.\n";
+    std::cout << "\nDatos insertados correctamente.\n";
 
     SQLTransact(entorno, conexion, SQL_COMMIT);
 }
@@ -127,9 +129,19 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
     std::cin >> cproducto;
 
     char cadena[256];
-    sprintf(cadena, "INSERT INTO Pedido (Cpedido, Ccliente, Fecha_pedido) VALUES (%d, %d, '%s');", cpedido, ccliente, fecha.c_str());
-
+    sprintf(cadena, "INSERT INTO Pedido (Cpedido, Ccliente, Fecha_pedido) VALUES (%d, %d, TO_DATE('%s', 'YYYY-MM-DD'));", cpedido, ccliente, fecha.c_str());
     SQLExecDirectA(handler, (SQLCHAR*) cadena, SQL_NTS);
+
+    SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)cadena, SQL_NTS);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        SQLCHAR sqlState[6], msg[SQL_MAX_MESSAGE_LENGTH];
+        SQLINTEGER nativeError;
+        SQLSMALLINT msgLen;
+        SQLGetDiagRecA(SQL_HANDLE_STMT, handler, 1, sqlState, &nativeError, msg, sizeof(msg), &msgLen);
+        std::cout << "Error SQL: " << msg << " (SQLSTATE: " << sqlState << ")\n";
+    }
+
+    mostrarContenidoTablas(handler, entorno, conexion);
 
     SQLTransact(entorno, conexion, SQL_COMMIT);
 
@@ -143,17 +155,35 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
         std::cin >> opcion;
 
         switch (opcion) {
-            case 1:
+            case 1: {
+                // Creamos handlers separados para SELECT, INSERT y UPDATE
+                SQLHSTMT handler_select, handler_insert, handler_update;
+                SQLAllocHandle(SQL_HANDLE_STMT, conexion, &handler_select);
+                SQLAllocHandle(SQL_HANDLE_STMT, conexion, &handler_insert);
+                SQLAllocHandle(SQL_HANDLE_STMT, conexion, &handler_update);
+
                 SQLExecDirectA(handler, (SQLCHAR*) "SAVEPOINT darDeAltaPedido_añadirDetalle", SQL_NTS);
 
-                // Comprobamos si hay o no stock
-                SQLExecDirectA(handler, (SQLCHAR*)
-                "SELECT Cantidad FROM Stock WHERE Cproducto = cproducto;", SQL_NTS);
+                // Comprobamos si hay stock disponible
+                char cadena_select[256];
+                sprintf(cadena_select, "SELECT Cantidad FROM Stock WHERE Cproducto = %d", cproducto);
+                SQLRETURN retProducto = SQLExecDirectA(handler_select, (SQLCHAR*)cadena_select, SQL_NTS);
 
-                // Usamos SQLFetch para obtener la cantidad y comprobar si hay stock
-                SQLFetch(handler);
-                int cantidad_disponible;
-                SQLGetData(handler, 1, SQL_C_LONG, &cantidad_disponible, 0, NULL);
+                if (retProducto != SQL_SUCCESS && retProducto != SQL_SUCCESS_WITH_INFO) {
+                    std::cout << "Error al consultar el stock.\n";
+                    SQLTransact(entorno, conexion, SQL_ROLLBACK);
+                    break;
+                }
+
+                int cantidad_disponible = 0;
+                
+                if (SQLFetch(handler_select) == SQL_SUCCESS) {
+                    SQLGetData(handler_select, 1, SQL_C_LONG, &cantidad_disponible, 0, NULL);
+                } else {
+                    std::cout << "No se ha podido obtener la cantidad disponible\n";
+                }
+
+                SQLCloseCursor(handler_select); 
 
                 if (cantidad_disponible > 0) {
                     int cantidad_solicitada;
@@ -161,14 +191,17 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
                     std::cin >> cantidad_solicitada;
 
                     if (cantidad_solicitada <= cantidad_disponible) {
-                        SQLExecDirectA(handler, (SQLCHAR*)
-                        "INSERT INTO Detalle_Pedido (Cpedido, Cproducto, Cantidad) VALUES (cpedido, cproducto, cantidad_solicitada);", SQL_NTS);
+                        char cadena2[256];
+                        sprintf(cadena2, "INSERT INTO Detalle_Pedido (Cpedido, Cproducto, Cantidad) VALUES (%d, %d, %d);", cpedido, cproducto, cantidad_solicitada);
+                        SQLExecDirectA(handler_insert, (SQLCHAR*)cadena2, SQL_NTS);
 
-                        // Actualizamos el stock
-                        SQLExecDirectA(handler, (SQLCHAR*)
-                        "UPDATE Stock SET Cantidad = Cantidad - cantidad_solicitada WHERE Cproducto = cproducto;", SQL_NTS);
+                        // Actualizamos Stock restando la cantidad solicitada
+                        char cadenaCant[256];
+                        sprintf(cadenaCant, "UPDATE Stock SET Cantidad = Cantidad - %d WHERE Cproducto = %d", cantidad_solicitada, cproducto);
+                        SQLExecDirectA(handler_update, (SQLCHAR*)cadenaCant, SQL_NTS);
 
                         std::cout << "Detalle de producto añadido correctamente.\n";
+
                     } else {
                         std::cout << "No hay suficiente stock disponible.\n";
                     }
@@ -176,10 +209,15 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
                     std::cout << "No hay stock disponible para este producto.\n";
                 }
 
+                SQLFreeHandle(SQL_HANDLE_STMT, handler_select);
+                SQLFreeHandle(SQL_HANDLE_STMT, handler_insert);
+                SQLFreeHandle(SQL_HANDLE_STMT, handler_update);
+
                 SQLTransact(entorno, conexion, SQL_COMMIT);
-                
+
                 std::cout << "Contenido actual de las tablas:\n";
                 mostrarContenidoTablas(handler, entorno, conexion);
+            }
             break;
             case 2:
                 SQLExecDirectA(handler, (SQLCHAR*) "SAVEPOINT darDeAltaPedido_eliminarDetalle", SQL_NTS);
@@ -218,9 +256,6 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
             default: std::cout << "Opcion no valida.\n"; break;
         }
     } while (!salida);
-
-    // Aquí se debería agregar la lógica para insertar el pedido y actualizar el stock
-    std::cout << "Pedido dado de alta correctamente.\n";
 }
 
 int main(int argc, char ** argv){
@@ -230,7 +265,6 @@ int main(int argc, char ** argv){
     int opcion;
 
     // Pedimos las credenciales al usuario para conectarse a la db:
-
     std::string dsn = "practbd"; // Nombre del DSN, puesto por defecto tal y como en la explicación del S1
     std::cout << "Esperando credenciales...\n";
     std::cout << "Usuario: ";
@@ -273,7 +307,9 @@ int main(int argc, char ** argv){
         exit(-1);
     }
 
-    // Aqui va el codigo
+    // Borramos todas las tablas de la sesion anterior
+    borrarTablas(handler, entorno, conexion);
+
     // Creamos la interfaz
     do {
         std::cout << "\n===== MENU PRINCIPAL =====\n";
