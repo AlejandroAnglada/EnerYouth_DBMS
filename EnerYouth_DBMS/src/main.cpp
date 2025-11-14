@@ -113,6 +113,10 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
     std::string fecha;
     bool salida = false;
 
+    SQLSetConnectAttr(conexion, SQL_ATTR_AUTOCOMMIT, (SQLPOINTER)SQL_AUTOCOMMIT_OFF, 0);
+    
+    SQLExecDirectA(handler, (SQLCHAR*) "SAVEPOINT", SQL_NTS);
+
     std::cout << "Ingrese el codigo del pedido: ";
     std::cin >> cpedido;
     std::cout << "Ingrese el codigo del cliente: ";
@@ -121,12 +125,11 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
     std::cin >> fecha;
     std::cout << "Ingrese el producto: ";
     std::cin >> cproducto;
-
+    
     char cadena[256];
     sprintf(cadena, "INSERT INTO Pedido (Cpedido, Ccliente, Fecha_pedido) VALUES (%d, %d, TO_DATE('%s', 'YYYY-MM-DD'));", cpedido, ccliente, fecha.c_str());
-    SQLExecDirectA(handler, (SQLCHAR*) cadena, SQL_NTS);
-
     SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)cadena, SQL_NTS);
+
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
         SQLCHAR sqlState[6], msg[SQL_MAX_MESSAGE_LENGTH];
         SQLINTEGER nativeError;
@@ -136,8 +139,6 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
     }
 
     mostrarContenidoTablas(handler, entorno, conexion);
-
-    SQLTransact(entorno, conexion, SQL_COMMIT);
 
     do {
         std::cout << "\n===== MENU ALTA PEDIDO =====\n";
@@ -156,7 +157,7 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
                 SQLAllocHandle(SQL_HANDLE_STMT, conexion, &handler_insert);
                 SQLAllocHandle(SQL_HANDLE_STMT, conexion, &handler_update);
 
-                SQLExecDirectA(handler, (SQLCHAR*) "SAVEPOINT darDeAltaPedido_añadirDetalle", SQL_NTS);
+                SQLExecDirectA(handler, (SQLCHAR*) "SAVEPOINT darDeAltaPedido_creado", SQL_NTS);
 
                 // Comprobamos si hay stock disponible
                 char cadena_select[256];
@@ -183,6 +184,7 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
 
                         if (cantidad_solicitada <= cantidad_disponible) {
                             char cadena2[256];
+
                             sprintf(cadena2, "INSERT INTO Detalle_Pedido (Cpedido, Cproducto, Cantidad) VALUES (%d, %d, %d);", cpedido, cproducto, cantidad_solicitada);
                             SQLExecDirectA(handler_insert, (SQLCHAR*)cadena2, SQL_NTS);
 
@@ -207,33 +209,18 @@ void darDeAltaPedido(SQLHSTMT handler, SQLHENV entorno, SQLHDBC conexion) {
                 SQLFreeHandle(SQL_HANDLE_STMT, handler_insert);
                 SQLFreeHandle(SQL_HANDLE_STMT, handler_update);
 
-                SQLTransact(entorno, conexion, SQL_COMMIT);
-
                 std::cout << "Contenido actual de las tablas:\n";
                 mostrarContenidoTablas(handler, entorno, conexion);
             }
             break;
             case 2:
-                SQLExecDirectA(handler, (SQLCHAR*)
-                "SELECT Cpedido FROM Detalle_Pedido WHERE Cproducto = cproducto;", SQL_NTS);
-
-                SQLExecDirectA(handler, (SQLCHAR*)
-                "DELETE FROM Detalle_Pedido WHERE Cpedido = cpedido;", SQL_NTS);
-
-                SQLTransact(entorno, conexion, SQL_COMMIT);
+                SQLExecDirectA(handler, (SQLCHAR*) "ROLLBACK TO SAVEPOINT darDeAltaPedido_creado;", SQL_NTS);
 
                 std::cout << "Contenido actual de las tablas:\n";
                 mostrarContenidoTablas(handler, entorno, conexion);
             break;
             case 3:
-                SQLExecDirectA(handler, (SQLCHAR*)
-                "DELETE FROM Detalle_Pedido WHERE Cpedido = cpedido;", SQL_NTS);
-
-                SQLExecDirectA(handler, (SQLCHAR*)
-                "DELETE FROM Pedido WHERE Cpedido = cpedido;", SQL_NTS);
-
-                SQLTransact(entorno, conexion, SQL_COMMIT);
-
+                SQLTransact(entorno, conexion, SQL_ROLLBACK);
                 std::cout << "Contenido actual de las tablas:\n";
                 mostrarContenidoTablas(handler, entorno, conexion);
                 salida = true;
@@ -279,7 +266,8 @@ int main(int argc, char ** argv){
                                     (SQLCHAR*)dsn.c_str(), dsn.size(),  
                                     (SQLCHAR*)user.c_str(), user.size(),  
                                     (SQLCHAR*)pwd.c_str(), pwd.size());
-                                    
+             
+
     SQLAllocHandle(SQL_HANDLE_STMT, conexion, &handler);                        // Inicializamos el handler para las sentencias
 
     // Comprobamos si la conexión ha sido exitosa:
