@@ -4,7 +4,7 @@
 
 ConexionADB::ConexionADB(){
     env = SQL_NULL_HENV;
-    hdb = SQL_NULL_HDBC;
+    dbc = SQL_NULL_HDBC;
     conexion_establecida = false;
 }
 
@@ -90,7 +90,7 @@ bool ConexionADB::connect(const std::string& dsn,
 }
 
 // Para obtener la conexión y poder hacer cositas:
-SQLHDBC ConexionADB::getConnection(){
+SQLHDBC ConexionADB::getConnection() const {
     // Si hay conexión la devolvemos; si no, devolvemos NULL (por seguridad, pero se supone que siempre está o bien o en NULL).
     if(isConnected())
         return dbc;
@@ -99,7 +99,7 @@ SQLHDBC ConexionADB::getConnection(){
 }
 
 // Para ver si se está o no conectado:
-bool ConexionADB::isConnected(){
+bool ConexionADB::isConnected() const {
     return conexion_establecida;
 }
 

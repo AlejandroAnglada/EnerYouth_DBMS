@@ -1,0 +1,15 @@
+# Ejecutables, esos (si acaso) los metemos en release
+EnerYouth
+*.out
+
+# Archivos temporales compilados
+*.o
+*.obj
+
+# Mi configuración de VS Code
+.vscode/
+
+# Documentación generada
+doc/html/
+doc/latex/
+

@@ -1,6 +1,9 @@
+// Porfa, portabilidad; recordad que no todos los usuarios usan Windows.
+#ifdef _WIN32
+    #include <windows.h>
+#endif
 #include <iostream>
 #include <sql.h>
-#include <windows.h>
 #include <sqlext.h>
 #include <sqltypes.h>
 #include <string>
