@@ -1,4 +1,4 @@
-#include "ConexionADB.h"
+#include "../include/ConexionADB.h"
 
 // Empezamos con el constructor; lo inicializamos todo a NULL para controlar estados de forma sencilla.
 
@@ -49,7 +49,7 @@ bool ConexionADB::connect(const std::string& dsn,
 
     // Intentamos establecer la conexión usando el DSN y las credenciales.
     if (bien) {
-        ret = SQLConnect(dbc,
+        ret = SQLConnectA(dbc,
                          (SQLCHAR*)dsn.c_str(), SQL_NTS,
                          (SQLCHAR*)usr.c_str(), SQL_NTS,
                          (SQLCHAR*)pwd.c_str(), SQL_NTS);
