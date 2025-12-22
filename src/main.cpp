@@ -442,7 +442,7 @@ int main(int argc, char ** argv){
     int opcion;
 
     // Inicializamos el entorno y la conexión:
-    SQLHSTMT handler = SQL_NULL_HSTMT;
+    SQLHSTMT handler;
     ConexionADB conexion;
 
     // Pedimos las credenciales al usuario para conectarse a la db:
@@ -453,20 +453,14 @@ int main(int argc, char ** argv){
     std::cout << "Password: ";
     std::cin >> pwd;
 
-    // Intentamos conectar con las credenciales dadas:
-    SQLRETURN validez = SQLConnectA( conexion.getConnection(), 
-                                    (SQLCHAR*)dsn.c_str(), dsn.size(),  
-                                    (SQLCHAR*)user.c_str(), user.size(),  
-                                    (SQLCHAR*)pwd.c_str(), pwd.size());
-             
-
-    SQLAllocHandle(SQL_HANDLE_STMT, conexion.getConnection(), &handler);                        // Inicializamos el handler para las sentencias
-
     // Creamos la conexión
     if (!conexion.connect(dsn, user, pwd)) {
         std::cerr << "Error al conectar con la BD\n";
         return 1;
     }
+
+    SQLHDBC dbc = conexion.getConnection();
+    SQLAllocHandle(SQL_HANDLE_STMT, dbc, &handler);
 
     GestionTransmisionDistribucion hogares(conexion);
 
@@ -501,7 +495,7 @@ int main(int argc, char ** argv){
     } while (opcion != 6);
 
     SQLExecDirectA(handler, (SQLCHAR*) "COMMIT;", SQL_NTS);
-    
+
     SQLFreeHandle(SQL_HANDLE_STMT, handler);
 
     std::cout << "Finalizando...\n";
