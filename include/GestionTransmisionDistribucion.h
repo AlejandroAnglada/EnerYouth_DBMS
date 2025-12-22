@@ -115,4 +115,4 @@ public:
                             const std::string& estado_incidencia);
 };
 
-#endif GESTION_TRANSMISION_DISTRIBUCION_H
+#endif // GESTION_TRANSMISION_DISTRIBUCION_H
