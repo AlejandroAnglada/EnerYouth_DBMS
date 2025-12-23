@@ -13,9 +13,50 @@
 
 void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
     SQLExecDirectA(handler, (SQLCHAR*)
+        "CREATE TABLE Cliente ("
+            "DNI_CIF VARCHAR2(9) PRIMARY KEY NOT NULL,"
+            "Nombre VARCHAR2(20) NOT NULL,"
+            "Apellidos VARCHAR2(80) NOT NULL,"
+            "Direccion VARCHAR2(100) NOT NULL,"
+            "Telefono VARCHAR2(9) NOT NULL,"
+            "Email VARCHAR2(100) NOT NULL,"
+            "Estado VARCHAR2(10) DEFAULT 'Activo' NOT NULL,"
+            "CONSTRANUMBER UQ_CLIENTE_ID UNIQUE (DNI_CIF),"
+            "CONSTRAINT UQ_CLIENTE_EMAIL UNIQUE (Email),"
+            "CONSTRAINT UQ_CLIENTE_TLF UNIQUE (Telefono),"
+            "CONSTRAINT CHK_CLIENTE_ESTADO CHECK (Estado IN ('Activo', 'Inactivo'))"
+        ");", SQL_NTS);
+    
+    SQLExecDirectA(handler, (SQLCHAR*)
+        "CREATE TABLE Contrato ("
+            "ID_Contrato NUMBER(9) PRIMARY KEY NOT NULL,"
+            "CUPS VARCHAR2(22) NOT NULL,"
+            "Tipo_Contrato VARCHAR2(20) NOT NULL,"
+            "Potencia_Con NUMBER(6,2) NOT NULL,"
+            "Tarifa VARCHAR2(20) NOT NULL,"
+            "IBAN VARCHAR2(34) NOT NULL,"
+            "Fecha_Inicio DATE DEFAULT SYSDATE NOT NULL,"
+            "Fecha_Fin DATE,"
+            "Estado VARCHAR2(15) DEFAULT 'Activo' NOT NULL,"
+            "CONSTRAINT CHK_CONTRATO_ESTADO CHECK (Estado IN ('Activo', 'Baja')),"
+            "CONSTRAINT CHK_POTENCIA CHECK (Potencia_Con > 3)"
+        ");", SQL_NTS);
+
+    SQLExecDirectA(handler, (SQLCHAR*)
+        "CREATE TABLE Hogar ("
+            "Direccion VARCHAR2(100) PRIMARY KEY NOT NULL,"
+            "DNI_Cliente VARCHAR2(9) NOT NULL,"
+            "ID_Contrato_H NUMBER(9) NOT NULL,"
+            "Tipo_Contrato VARCHAR2(20),"
+            "Zona_Geografica VARCHAR2(100),"
+            "FOREIGN KEY (DNI_Cliente) REFERENCES Cliente(DNI_CIF),"
+            "FOREIGN KEY (ID_Contrato_H) REFERENCES Contrato(ID_Contrato)"
+        ");", SQL_NTS);
+
+    SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Incidencia ("
-            "ID_Incidencia INT(9) NOT NULL,"
-            "ID_Contrato_I INT(9) NOT NULL"
+            "ID_Incidencia NUMBER(9) NOT NULL,"
+            "ID_Contrato_I NUMBER(9) NOT NULL,"
             "Descripcion_Incidencia VARCHAR2(200),"
             "Tipo_Incidencia VARCHAR2(100),"
             "Fecha_Incidencia DATE,"
@@ -26,20 +67,11 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
         ");", SQL_NTS);
 
     SQLExecDirectA(handler, (SQLCHAR*)
-        "CREATE TABLE Hogar ("
-            "Direccion VARCHAR2(100) PRIMARY KEY NOT NULL,"
-            "DNI_Cliente VARCHAR2(9) NOT NULL,"
-            "Tipo_Contrato VARCHAR2(20) NOT NULL,"
-            "Zona_Geografica VARCHAR2(100) NOT NULL,"
-            "FOREIGN KEY (DNI_Cliente) REFERENCES Cliente(DNI_CIF)"
-        ");", SQL_NTS);
-
-    SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Instalacion_Energetica ("
             "Nombre_Fuente_Energetica VARCHAR2(60),"
             "Direccion_Instalaciones VARCHAR2(180),"
             "Descripcion VARCHAR2(180),"
-            "Ingresos_Netos_Historicos DOUBLE(20,2)"
+            "Ingresos_Netos_Historicos NUMBER(20,2),"
             "Fecha_Fundacion DATE,"
             "Potencia_Actual NUMBER(3,0),"
             "CONSTRAINT Potencia_Valida CHECK (Potencia_Actual >= 0 AND Potencia_Actual <= 100),"
@@ -48,10 +80,10 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
     
     SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Cesion_Potencia ("
-            "FOREIGN KEY Nombre_Fuente_Energetica_C REFERENCES Instalacion_Energetica (Nombre_Fuente_Energetica)"
-            "FOREIGN KEY Direccion_Instalaciones_C REFERENCES Instalacion_Energetica (Direccion_Instalaciones),"
-            "FOREIGN KEY Nombre_Fuente_Energetica_R REFERENCES Instalacion_Energetica (Nombre_Fuente_Energetica)"
-            "FOREIGN KEY Direccion_Instalaciones_R REFERENCES Instalacion_Energetica (Direccion_Instalaciones),"
+            "FOREIGN KEY (Nombre_Fuente_Energetica_C) REFERENCES Instalacion_Energetica (Nombre_Fuente_Energetica),"
+            "FOREIGN KEY (Direccion_Instalaciones_C) REFERENCES Instalacion_Energetica (Direccion_Instalaciones),"
+            "FOREIGN KEY (Nombre_Fuente_Energetica_R) REFERENCES Instalacion_Energetica (Nombre_Fuente_Energetica),"
+            "FOREIGN KEY (Direccion_Instalaciones_R) REFERENCES Instalacion_Energetica (Direccion_Instalaciones),"
             "CONSTRAINT Clave_Primaria_CesPot PRIMARY KEY (Nombre_Fuente_Energetica_C, Direccion_Instalaciones_C)"
         ");", SQL_NTS);
 
@@ -68,8 +100,8 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
     SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Soluciona ("
             "DNI VARCHAR2(9) NOT NULL,"
-            "ID_Incidencia INT(9) NOT NULL,"
-            "ID_Contrato_I INT(9) NOT NULL,"
+            "ID_Incidencia NUMBER(9) NOT NULL,"
+            "ID_Contrato_I NUMBER(9) NOT NULL,"
             "FOREIGN KEY (DNI) REFERENCES Empleado(DNI),"
             "FOREIGN KEY (ID_Incidencia) REFERENCES Incidencia(ID_Incidencia),"
             "FOREIGN KEY (ID_Contrato_I) REFERENCES Contrato(ID_Contrato),"
@@ -86,53 +118,25 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
         ");", SQL_NTS);
 
     SQLExecDirectA(handler, (SQLCHAR*)
-        "CREATE TABLE Cliente ("
-            "DNI_CIF VARCHAR2(9) PRIMARY KEY NOT NULL,"
-            "Nombre VARCHAR2(20) NOT NULL,"
-            "Apellidos VARCHAR2(80) NOT NULL,"
-            "Direccion VARCHAR2(100) NOT NULL,"
-            "Telefono VARCHAR2(9) NOT NULL,"
-            "Email VARCHAR2(100) NOT NULL,"
-            "CONSTRAINT UQ_CLIENTE_ID UNIQUE (ID_Cliente),"
-            "CONSTRAINT UQ_CLIENTE_EMAIL UNIQUE (Email),"
-            "CONSTRAINT UQ_CLIENTE_TLF UNIQUE (Telefono),"
-            "CONSTRAINT CHK_CLIENTE_ESTADO CHECK (Estado IN ('Activo', 'Inactivo'))"
-        ");", SQL_NTS);
-
-    SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Registrada_en ("
-            "ID_Incidencia INT(9) NOT NULL,"
-            "Contrato_asociado INT(9) NOT NULL,"
+            "ID_Incidencia NUMBER(9) NOT NULL,"
+            "Contrato_asociado NUMBER(9) NOT NULL,"
             "FOREIGN KEY (ID_Incidencia) REFERENCES Incidencia(ID_Incidencia),"
             "FOREIGN KEY (Contrato_asociado) REFERENCES Contrato(ID_Contrato),"
             "PRIMARY KEY (ID_Incidencia, Contrato_asociado)"
         ");", SQL_NTS);
 
     SQLExecDirectA(handler, (SQLCHAR*)
-        "CREATE TABLE Contrato ("
-            "ID_Contrato INT(9) PRIMARY KEY NOT NULL,"
-            "CUPS VARCHAR2(22) NOT NULL,"
-            "Tipo_Contrato VARCHAR2(20) NOT NULL,"
-            "Potencia_Con DOUBLE(6,2) NOT NULL,"
-            "Tarifa VARCHAR2(20) NOT NULL,"
-            "IBAN VARCHAR2(34) NOT NULL,"
-            "Fecha_Inicio DATE DEFAULT SYSDATE NOT NULL,"
-            "Fecha_Fin DATE,"
-            "Estado VARCHAR2(15) DEFAULT 'Activo' NOT NULL,"
-            "CONSTRAINT CHK_CONTRATO_ESTADO CHECK (Estado IN ('Activo', 'Baja')),"
-            "CONSTRAINT CHK_POTENCIA CHECK (Potencia_Con > 3),"
-            "CONSTRAINT FK_CONTRATO_CLIENTE FOREIGN KEY (DNI_Titular)"
-                "REFERENCES Cliente (DNI_CIF)"
-                "ON DELETE CASCADE"
-        ");", SQL_NTS);
-
-    SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Asociado ("
             "DNI_Asociado VARCHAR2(9) NOT NULL,"
-            "ID_Contrato_A INT(9) NOT NULL,"
+            "ID_Contrato_A NUMBER(9) NOT NULL,"
             "FOREIGN KEY (DNI_Asociado) REFERENCES Cliente(DNI_CIF),"
             "CONSTRAINT PK_ASOCIADO PRIMARY KEY (DNI_Asociado, ID_Contrato_A)"
         ");", SQL_NTS);
+
+    std::cout << "\nTablas creadas correctamente.\n";
+
+    SQLEndTran(SQL_HANDLE_DBC, conexion.getConnection(), SQL_COMMIT);
 }
 
 void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
@@ -157,11 +161,13 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Hogar;", SQL_NTS);
     std::cout << "\n--Tabla Hogar:--\n";
     SQLVARCHAR Direccion[100], DNI_Cliente[9], Tipo_Contrato[20], Zona_Geografica[100];
+    SQLINTEGER ID_Contrato_H;
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, Direccion, sizeof(Direccion), NULL);
         SQLGetData(handler, 2, SQL_C_CHAR, DNI_Cliente, sizeof(DNI_Cliente), NULL);
         SQLGetData(handler, 3, SQL_C_CHAR, Tipo_Contrato, sizeof(Tipo_Contrato), NULL);
         SQLGetData(handler, 4, SQL_C_CHAR, Zona_Geografica, sizeof(Zona_Geografica), NULL);
+        SQLGetData(handler, 5, SQL_C_LONG, &ID_Contrato_H, 0, NULL);
         std::cout << Direccion << "\t" << DNI_Cliente << "\n";
     }
 
@@ -470,6 +476,37 @@ int main(int argc, char ** argv){
     // Borramos todas las tablas de la sesion anterior
     borrarTablas(conexion, handler);
 
+    // Creamos las tablas (prueba)
+    crearTablas(conexion, handler);
+
+    // Inserto DNI en cliente e ID contrato en Contrato para poder dar de alta hogares
+    int id_contrato = 1;
+    char cups[22] = "ES1234567890125689012";
+    char tipo_contrato[20] = "Residencial";
+    double potencia_con = 5.5;
+    char tarifa[20] = "Tarifa1";
+    char iban[34] = "ES7620770024003102575766";
+    char contrato[2048];
+    sprintf(contrato, "INSERT INTO Contrato (ID_Contrato, CUPS, Tipo_Contrato, Potencia_Con, Tarifa, IBAN) VALUES (%d, '%s', '%s', %f, '%s', '%s');", id_contrato, cups, tipo_contrato, potencia_con, tarifa, iban);
+    SQLExecDirectA(handler, (SQLCHAR*) contrato, SQL_NTS);
+
+    SQLEndTran(SQL_HANDLE_DBC, conexion.getConnection(), SQL_COMMIT);
+
+    char dni[9] = "1234568A";
+    char nombre[20] = "Juan";
+    char apellidos[80] = "Perez Gomez";
+    char direccion[100] = "Calle Falsa 123";
+    char telefono[9] = "60012346";
+    char email[100] = "juan@gmail.com";
+    char cliente[2048];
+    sprintf(cliente, "INSERT INTO Cliente (DNI_CIF, nombre, apellidos, direccion, telefono, email) VALUES ('%s', '%s', '%s', '%s', '%s', '%s');", dni, nombre, apellidos, direccion, telefono, email);
+    SQLExecDirectA(handler, (SQLCHAR*) cliente, SQL_NTS);
+
+    SQLEndTran(SQL_HANDLE_DBC, conexion.getConnection(), SQL_COMMIT);
+    
+    // Mostramos las tablas (prueba)
+    mostrarContenidoTablas(conexion, handler);
+
     // Creamos la interfaz
     do {
         std::cout << "\n===== MENU PRINCIPAL =====\n";
@@ -496,8 +533,6 @@ int main(int argc, char ** argv){
             default: std::cout << "Opcion no valida.\n"; break;
         }
     } while (opcion != 6);
-
-    SQLExecDirectA(handler, (SQLCHAR*) "COMMIT;", SQL_NTS);
 
     SQLFreeHandle(SQL_HANDLE_STMT, handler);
 

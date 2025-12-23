@@ -14,6 +14,27 @@ std::string escapeSQL(const std::string& str) {
     return result;
 }
 
+// Función para mostrar errores SQL
+void mostrarError(SQLHSTMT stmt) {
+    SQLCHAR sqlState[6], msg[SQL_MAX_MESSAGE_LENGTH];
+    SQLINTEGER nativeError;
+    SQLSMALLINT msgLen;
+
+    SQLGetDiagRecA(
+        SQL_HANDLE_STMT,
+        stmt,
+        1,
+        sqlState,
+        &nativeError,
+        msg,
+        sizeof(msg),
+        &msgLen
+    );
+
+    std::cerr << "SQLSTATE: " << sqlState << "\n";
+    std::cerr << "Mensaje : " << msg << "\n";
+}
+
 GestionTransmisionDistribucion::GestionTransmisionDistribucion(ConexionADB& con)
     : conexion(con) {
 }
@@ -40,6 +61,7 @@ bool GestionTransmisionDistribucion::altaHogar(const std::string& direccion, con
 
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
         std::cout << "Error al ejecutar la sentencia SQL para dar de alta el hogar.\n";
+        mostrarError(handler);
         SQLFreeHandle(SQL_HANDLE_STMT, handler);
         return false;
     }
