@@ -15,7 +15,7 @@ bool GestionRecursosEnergeticos::altaFuenteEnergetica(
         SQLHDBC conex = this->conexion.getConnection();
         // "Handler"
         SQLHSTMT handler = SQL_NULL_HSTMT;
-        // Inicializamos el handler intermedio:
+        // Inicializamos el handler:
         SQLAllocHandle(SQL_HANDLE_STMT, conex, &handler);
         // Vamos a definir como string (convertible a char* con c_str()) la sentencia:
         std::string sql_sentence = "INSERT INTO Instalacion_Energetica ";
@@ -24,13 +24,17 @@ bool GestionRecursosEnergeticos::altaFuenteEnergetica(
         SQLRETURN ret = SQLExecDirect(handler, (SQLCHAR*)sql_sentence.c_str(), SQL_NTS);
         // Si no se ha realizado por lo que sea:
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
-            std::cerr << "¡ERROR! Algo ha salido mal en la sentencia. ¿Ha puesto bien los datos?\n";
+            std::cerr << "ERROR: Algo ha salido mal en la sentencia. ¿Ha puesto bien los datos?\n";
+            return false;
         }
         // Liberamos el handler:
         SQLFreeHandle(SQL_HANDLE_STMT, handler);
 
     } else {
-        std::cerr << "ERROR: ¡Conexión no establecida correctamente! Compruebe sus credenciales.\nFinalizando...\n";
-        exit(-1);
+        std::cerr << "ERROR: Conexión no establecida correctamente. Compruebe sus credenciales.\nFinalizando...\n";
+        return false;
     }
+
+    // Si se ha llegado aquí, todo OK; devuelve true. ¡Bien!
+    return true;
 }
