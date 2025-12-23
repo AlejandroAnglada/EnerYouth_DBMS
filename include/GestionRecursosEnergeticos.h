@@ -73,7 +73,7 @@ public:
      * @return true si la consulta fue exitosa; false en caso contrario.
      */
     bool consultarIngresosPorInstalacion(const std::string& direccion,
-                                         int& ingresos) const;
+                                         double& ingresos) const;
 
     /* ========================= RF-2.3 ========================= */
 
