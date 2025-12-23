@@ -30,7 +30,9 @@ public:
     /**
      * @brief Constructor.
      * @param con Referencia a una conexión a base de datos ya inicializada. Para ver su funcionalidad,
-     * véase el fichero "ConexionADB.h".
+     * véase el fichero "ConexionADB.h". NOTA: Declarado "explicit" para NO poder usar el constructor por
+     * defecto. JAMÁS deberá poder existir una instancia de subsistema *sin* una conexión asociada (¿cómo se
+     * pretende dar funcionalidad a tu subsistema sin conectarte a la base de datos? Jeje).
      */
     explicit GestionRecursosEnergeticos(ConexionADB& con);
 
@@ -41,19 +43,26 @@ public:
      * @param nombre Nombre de la fuente de energía.
      * @param descripcion Descripción de la fuente.
      * @param direccion Dirección de las instalaciones asociadas.
+     * @param fechaYYYYMMDDD Fecha de creación de las instalaciones. No siempre será hoy; ¿y si la empresa
+     * @param ingresos_netos Ingresos netos históricos de las instalaciones. Por defecto "0.0".
+     * @param potencia_actual Potencia actual de las instalaciones. Por defecto 50%.
+     * compra unas instalaciones fundadas en 1968, por ejemplo? Formato 'YYYY-MM-DD'
      * @return true si la operación se realizó con éxito; false en caso contrario.
      */
     bool altaFuenteEnergetica(const std::string& nombre,
                               const std::string& descripcion,
                               const std::string& direccion,
-                              const std::string& fechaYYYYMMDD);
+                              const std::string& fechaYYYYMMDD,
+                              const std::string& ingresos_netos = "0.0",
+                              const std::string& potencia_actual = "50.0");
 
     /**
      * @brief Da de baja una fuente de energía existente en el sistema.
      * @param nombre Nombre de la fuente de energía.
+     * @param direccion Dirección de las instalaciones. Forma clave primara junto con nombre.
      * @return true si la operación se realizó con éxito; false en caso contrario.
      */
-    bool bajaFuenteEnergetica(const std::string& nombre);
+    bool bajaFuenteEnergetica(const std::string& nombre, const std::string& direccion);
 
     /* ========================= RF-2.2 ========================= */
 
