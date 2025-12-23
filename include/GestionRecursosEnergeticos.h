@@ -29,7 +29,8 @@ private:
 public:
     /**
      * @brief Constructor.
-     * @param con Referencia a una conexión a base de datos ya inicializada.
+     * @param con Referencia a una conexión a base de datos ya inicializada. Para ver su funcionalidad,
+     * véase el fichero "ConexionADB.h".
      */
     explicit GestionRecursosEnergeticos(ConexionADB& con);
 
@@ -39,12 +40,13 @@ public:
      * @brief Da de alta una nueva fuente de energía en el sistema.
      * @param nombre Nombre de la fuente de energía.
      * @param descripcion Descripción de la fuente.
-     * @param direccion Direccion de las instalaciones asociadas.
+     * @param direccion Dirección de las instalaciones asociadas.
      * @return true si la operación se realizó con éxito; false en caso contrario.
      */
     bool altaFuenteEnergetica(const std::string& nombre,
                               const std::string& descripcion,
-                              const std::string& direccion);
+                              const std::string& direccion,
+                              const std::string& fechaYYYYMMDD);
 
     /**
      * @brief Da de baja una fuente de energía existente en el sistema.
@@ -57,7 +59,7 @@ public:
 
     /**
      * @brief Consulta los ingresos netos anuales de una instalación concreta.
-     * @param direccion Direccion de la instalación.
+     * @param direccion Dirección de la instalación.
      * @param ingresos Valor de salida con los ingresos netos.
      * @return true si la consulta fue exitosa; false en caso contrario.
      */
@@ -97,5 +99,18 @@ public:
      */
     bool cederPotencia(const std::string& instalacionCedente,
                        const std::string& instalacionReceptora,
-                       int po
+                       int potencia);
 
+    /* ========================= RF-2.6 ========================= */
+
+    /**
+     * @brief Da de alta una nueva instalación energética en el sistema.
+     * @param direccion Dirección de la instalación.
+     * @param tipoEnergia Tipo de energía generada.
+     * @return true si la operación se realizó con éxito; false en caso contrario.
+     */
+    bool altaInstalacionEnergetica(const std::string& direccion,
+                                   const std::string& tipoEnergia);
+};
+
+#endif // GESTION_RECURSOS_ENERGETICOS_H
