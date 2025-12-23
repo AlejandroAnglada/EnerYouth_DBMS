@@ -15,12 +15,8 @@ std::string escapeSQL(const std::string& str) {
 }
 
 GestionTransmisionDistribucion::GestionTransmisionDistribucion(ConexionADB& con)
-    : conexion(con) 
-    {
-        if (!conexion.isConnected()) {
-        std::cerr << "La conexión a la base de datos no está establecida.\n";
-    }
-    }
+    : conexion(con) {
+}
 
 bool GestionTransmisionDistribucion::altaHogar(const std::string& direccion, const std::string& dni_cliente, int id_contrato) {
     // Comprobamos que la conexión está establecida 
@@ -28,9 +24,11 @@ bool GestionTransmisionDistribucion::altaHogar(const std::string& direccion, con
         return false;
     }
 
-    // Declaramos el handler para ejecutar la sentencia SQL
-    SQLHSTMT handler;
-    if (SQLAllocHandle(SQL_HANDLE_STMT, conexion.getConnection(), &handler) != SQL_SUCCESS) {
+    SQLHDBC con = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+
+    // Inicializamos el handler para ejecutar la sentencia SQL
+    if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
         return false;
     }
 
@@ -59,8 +57,10 @@ bool GestionTransmisionDistribucion::bajaHogar(const std::string& direccion) {
     }
 
     // Declaramos el handler para ejecutar la sentencia SQL
-    SQLHSTMT handler;
-    if (SQLAllocHandle(SQL_HANDLE_STMT, conexion.getConnection(), &handler) != SQL_SUCCESS) {
+    SQLHDBC con = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+
+    if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
         return false;
     }
 
@@ -91,8 +91,10 @@ std::vector<HogarInfo> GestionTransmisionDistribucion::listarHogares(const std::
     if (!conexion.isConnected()) return hogares;
 
     // Declaramos el handler para ejecutar la sentencia SQL
-    SQLHSTMT handler;
-    if (SQLAllocHandle(SQL_HANDLE_STMT, conexion.getConnection(), &handler) != SQL_SUCCESS) {
+    SQLHDBC con = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+    
+    if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
         return hogares;
     }
 
@@ -172,8 +174,10 @@ bool GestionTransmisionDistribucion::modificarHogar(const std::string& direccion
     }
 
     // Declaramos el handler para ejecutar la sentencia SQL
-    SQLHSTMT handler;
-    if (SQLAllocHandle(SQL_HANDLE_STMT, conexion.getConnection(), &handler) != SQL_SUCCESS) {
+    SQLHDBC con = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+    
+    if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
         return false;
     }
 
@@ -206,10 +210,12 @@ bool GestionTransmisionDistribucion::registrarIncidencia(int id_incidencia, cons
     }
 
     // Declaramos el handler para ejecutar la sentencia SQL
-    SQLHSTMT handler;
-    if (SQLAllocHandle(SQL_HANDLE_STMT, conexion.getConnection(), &handler) != SQL_SUCCESS) {
+    SQLHDBC con = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+    
+    if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
         return false;
-    } 
+    }
 
     // Registramos la incidencia
     char incidencia[4096];

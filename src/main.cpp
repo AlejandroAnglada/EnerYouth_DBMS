@@ -437,11 +437,12 @@ void gestionTransmisionDistribucion(GestionTransmisionDistribucion &hogares) {
         }
     } while (opcion_hogar != 6);
 }
+
 int main(int argc, char ** argv){
     std::string user, pwd;
     int opcion;
 
-    // Inicializamos el entorno y la conexión:
+    // Declaramos el entorno y la conexión:
     SQLHSTMT handler;
     ConexionADB conexion;
 
@@ -458,9 +459,11 @@ int main(int argc, char ** argv){
         std::cerr << "Error al conectar con la BD\n";
         return 1;
     }
+    
+    SQLHDBC con = conexion.getConnection();
+    handler = SQL_NULL_HSTMT;
 
-    SQLHDBC dbc = conexion.getConnection();
-    SQLAllocHandle(SQL_HANDLE_STMT, dbc, &handler);
+    SQLAllocHandle(SQL_HANDLE_STMT, con, &handler);
 
     GestionTransmisionDistribucion hogares(conexion);
 
