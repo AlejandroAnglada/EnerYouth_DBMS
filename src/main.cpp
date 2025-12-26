@@ -9,6 +9,7 @@
 #include <string>
 #include "../include/ConexionADB.h"
 #include "../include/GestionTransmisionDistribucion.h"
+#include "../include/GestionEmpleados.h"
 
 
 void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
@@ -115,7 +116,9 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
             "Apellidos VARCHAR(40) NOT NULL,"
             "Telefono VARCHAR(20),"
             "Correo_Electronico VARCHAR(30),"
-            "Posicion_Empresa VARCHAR(20)"
+            "Posicion_Empresa VARCHAR(20),"
+            "Ventas NUMBER(9) DEFAULT 0,"
+            "Incentivo NUMBER(10) DEFAULT 0"
         ");", SQL_NTS);
     if (retEmpleado != SQL_SUCCESS && retEmpleado != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "Error creando tabla Empleado\n";
@@ -400,6 +403,7 @@ void borrarTablas(ConexionADB &conexion, SQLHSTMT handler) {
     SQLEndTran(SQL_HANDLE_DBC, conexion.getConnection(), SQL_COMMIT);
 }
 
+
 void gestionTransmisionDistribucion(GestionTransmisionDistribucion &hogares) {
     int opcion_hogar;
 
@@ -594,6 +598,182 @@ void crearTriggerActualizarDatosHogar(ConexionADB &conexion, SQLHSTMT handler) {
     }
 }
 
+
+void gestionEmpleados(GestionEmpleados &empleados) {
+    int opcion_empleado;
+
+    do {
+        std::cout << "\nGestion de Empleados seleccionada.\n";
+        std::cout << "--Bienvenido al subsistema de gestion de empleados---\n";
+        std::cout << "Aqui podra contratar, despedir y modificar empleados, modificar contratos, mostrar datos de los empleados, calcular incentivos y solucionar incidencias.\n"; 
+        std::cout << "\n===== MENU GESTION DE EMPLEADOS =====\n";
+        std::cout << "1. Contratar empleado\n";
+        std::cout << "2. Despedir empleado\n";
+        std::cout << "3. Listar emeplados\n";
+        std::cout << "4. Modificar contrato\n";
+        std::cout << "5. Calcular incentivos\n";
+        std::cout << "6. Solucionar incidencia\n";
+        std::cout << "7. Volver al menu principal\n";
+        std::cout << "Seleccione una opcion: ";
+        std::cin >> opcion_empleado;
+
+        switch (opcion_empleado) {
+            case 1: {
+                std::string dni_empleado, nombre, apellidos, telefono, correo_electronico, puesto;
+
+                std::cin.ignore();
+                std::cout << "Introduzca el DNI del empleado: ";
+                std::getline(std::cin, dni_empleado);
+                std::cout << "Introduzca el nombre del empleado: ";
+                std::getline(std::cin, nombre);
+                std::cout << "Introduzca los apellidos del empleado: ";
+                std::getline(std::cin, apellidos);
+                std::cout << "Introduzca el número de teléfono del empleado: ";
+                std::cin.ignore();
+                std::getline(std::cin, telefono);
+                std::cout << "Introduzca el correo electrónico del empleado: ";
+                std::getline(std::cin, correo_electronico);
+                std::cout << "Introduzca el puesto del empleado en la empresa: ";
+                std::cin.ignore();
+                std::getline(std::cin, puesto);
+                if (empleados.contratarEmpleado(dni_empleado, nombre, apellidos, telefono, correo_electronico, puesto)) {
+                     std::cout << "Empleado contratado correctamente.\n";
+                } else {
+                    std::cout << "Error al contratar el empleado.\n";
+                }
+                break;
+            }
+            case 2:
+                {
+                    std::string dni_empleado;
+                    std::cin.ignore();
+                    std::cout << "Introduzca el DNI del empleado a despeddir: ";
+                    std::getline(std::cin, dni_empleado);
+
+                    if (empleados.despedirEmpleado(dni_empleado)) {
+                        std::cout << "Empleado despedido correctamente.\n";
+                    } else {
+                        std::cout << "Error al despedir al empleado.\n";
+                    }
+                }
+                break;
+            case 3:
+                {
+
+                    std::vector<EmpleadoInfo> empleados_listados = empleados.mostrarEmpleados();
+                    std::cout << "Empleados encontrados:\n";
+                    for (const auto& e : empleados_listados) {
+                        std::cout << "DNI: " << e.dni_empleado << "\n";
+                        std::cout << "Nombre: " << e.nombre << "\n";
+                        std::cout << "Apellidos: " << e.apellidos << "\n";
+                        std::cout << "Telefono: " << e.telefono << "\n";
+                        std::cout << "Correo Electronico: " << e.correo_electronico << "\n";
+                        std::cout << "Puesto: " << e.puesto << "\n";
+                        std::cout << "Ventas:" << e.ventas << "\n\n";
+                    }
+                }
+                break;
+            case 4: {
+                std::string dni_empleado;
+
+                std::cin.ignore();
+                std::cout << "Introduzca el DNI del empleado: ";
+                std::getline(std::cin, dni_empleado);
+
+                std::string datos_modificados = empleados.modificarEmpleado(dni_empleado);
+                if (!datos_modificados.empty()) {
+                    std::cout << "Empleado modificado correctamente. Nuevos datos:\n" << datos_modificados << "\n";
+                } else {
+                    std::cout << "Error al modificar el empleado.\n";
+                }
+                break;
+            }
+            case 5: {
+                
+                std::pair<std::vector<EmpleadoInfo>,int> incentivo_empleados = empleados.incentivoParaEmpleados();
+                    std::cout << "Empleados encontrados:\n";
+                    for (const auto& e : incentivo_empleados.first) {
+                        std::cout << "DNI: " << e.dni_empleado << "\n";
+                        std::cout << "Nombre: " << e.nombre << "\n";
+                        std::cout << "Apellidos: " << e.apellidos << "\n";
+                        std::cout << "Telefono: " << e.telefono << "\n";
+                        std::cout << "Correo Electronico: " << e.correo_electronico << "\n";
+                        std::cout << "Puesto: " << e.puesto << "\n";
+                        std::cout << "Ventas:" << e.ventas << "\n";
+                        std::cout << "Incentivo: " << incentivo_empleados.second << "\n\n";
+                    }               
+                     break;
+            }
+            case 6: {
+                std::string dni_empleado, estado_incidencia;
+                int id_incidencia;
+
+                std::cin.ignore();
+                std::cout << "Introduzca el DNI del empleado que soluciona la incidencia: ";
+                std::getline(std::cin, dni_empleado);
+                std::cout << "Introduzca el ID de la incidencia a solucionar: ";
+                std::cin >> id_incidencia;
+                std::cout << "Introduzca el estado de la incidencia.";
+                std::getline(std::cin, estado_incidencia);
+                std::pair<std::string,std::string> solucion_incidecias = empleados.solucionIncidencias(dni_empleado, id_incidencia, estado_incidencia);
+                if (!solucion_incidecias.first.empty()) {
+                    std::cout << "DNI del empleado encargado:\n" << solucion_incidecias.first << "\n";
+                    std::cout << "Nuevo estado de la incidencia:\n" << solucion_incidecias.second << "\n";
+                } else {
+                    std::cout << "Error al solucionar la incidencia.\n";
+                }                     
+                break;
+            }
+            case 7:
+                std::cout << "Volviendo al menu principal...\n";
+                break;
+            default:
+                std::cout << "Opcion no valida. Intente de nuevo.\n";
+                break;
+        }
+    } while (opcion_empleado != 7);
+}
+
+void crearTriggerVentas(ConexionADB &conexion, SQLHSTMT handler) {
+    // Creamos un trigger (disparador) que se ejecuta automáticamante cuando se actualiza el número de ventas
+    //de un empleado. El objetivo es recalcualr el incentivo de forma automáticay garantizar
+    //que la regla de negocio se cumpla siempre, independientemiente de que la actualización
+    //venga desde la aplicación o directamente desde la base de datos.
+    //
+    //AFTER UPDATE OF Ventas indica que el trigger se dispara después de modificar la columna Ventas
+    //de la tabla Empleado.
+    //
+    //FOR EACH ROW indica que el trigger se ejecuta para cada fila que se actualice.
+    //
+    // El bloque entre BEGIN y END contiene la lógica del trigger:
+    // - Si las ventas nuevas (:NEW.ventas) son mayores que 30, se calcula el incentivo como
+    //   (ventas - 30) * 100 y se actualiza la columna incentivo del empleado correspondiente.
+    // - Si las ventas nuevas son 30 o menos, se establece el incentivo a 0.
+
+    SQLRETURN retTrigger = SQLExecDirectA(handler, (SQLCHAR*)
+        "CREATE OR REPLACE TRIGGER trg_calcular_incentivo_empleado "
+        "AFTER UPDATE OF Ventas ON Empleado "
+        "FOR EACH ROW "
+        "BEGIN "
+        "   IF :NEW.Ventas > 30 THEN "
+        "       UPDATE Empleado "
+        "       SET Incentivo = (:NEW.ventas - 30)*100 "
+        "       WHERE DNI = :NEW.DNI; "
+        "   ELSE "
+        "       UPDATE Empleado "
+        "       SET Incentivo = 0 "
+        "       WHERE DNI = :NEW.DNI; "
+        "   END IF; "
+        "END;", SQL_NTS);
+
+    if (retTrigger != SQL_SUCCESS && retTrigger != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando trigger trg_calcular_incentivo_empleado\n";
+    } else {
+        std::cout << "Trigger trg_calcular_incentivo_empleado creado correctamente.\n";
+    }
+
+}
+
 int main(int argc, char ** argv){
     std::string user, pwd;
     int opcion;
@@ -622,6 +802,7 @@ int main(int argc, char ** argv){
     SQLAllocHandle(SQL_HANDLE_STMT, con, &handler);
 
     GestionTransmisionDistribucion hogares(conexion);
+    GestionEmpleados empleados(conexion);
 
     // Borramos todas las tablas de la sesion anterior
     borrarTablas(conexion, handler);
@@ -685,7 +866,7 @@ int main(int argc, char ** argv){
             case 1: gestionTransmisionDistribucion(hogares); break;
             case 2: 
 
-            case 3: 
+            case 3: gestionEmpleados(empleados); break;
 
             case 4: 
 

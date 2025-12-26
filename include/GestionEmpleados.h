@@ -7,6 +7,18 @@
 // Forward declaration para evitar dependencias innecesarias en la cabecera.
 class ConexionADB;
 
+// Estructura para almacenar información de un empleado.
+struct EmpleadoInfo {
+    std::string dni_empleado;
+    std::string nombre;
+    std::string apellidos;
+    std::string telefono;
+    std::string correo_electronico;
+    std::string puesto;
+    int ventas;
+    int incentivo;
+};
+
 /**
  * @class GestionEmpleados
  * @brief Clase encargada de implementar el subsistema de gestión de empleados.
@@ -47,7 +59,7 @@ public:
      */
     bool contratarEmpleado(const std::string& dni_empleado, const std::string& nombre, 
                            const std::string& apellidos, const std::string& telefono,
-                           const std::string& correo_electronico, const std::string& puesto);
+                           const std::string& correo_electronico, const std::string& puesto = "");
 
 
     /* ========================= RF-4.2 ========================= */
@@ -64,7 +76,7 @@ public:
      * @brief Muestra la lista de todos los empleados en el sistema.
      * @return Cadena de texto con la información de todos los empleados.
      */
-    std::vector<std::string> mostrarEmpleados();   
+    std::vector<EmpleadoInfo> mostrarEmpleados();   
     
     /* ========================= RF-4.4 ========================= */
     /**
@@ -77,17 +89,9 @@ public:
     /* ========================= RF-4.5 ========================= */
     /**
      * @brief Calcula el incentivo para un empleado basado en su puesto.
-     * @param dni_empleado DNI del empleado.
-     * @param nombre Nombre del empleado.
-     * @param apellidos Apellidos del empleado.
-     * @param telefono Teléfono del empleado.
-     * @param correo_electronico Correo electrónico del empleado.
-     * @param puesto Puesto de trabajo del empleado.
      * @return vector de string con la infotmación de cada empleado que debe recibir incentivo y el incentivo correspondiente.
      */
-    std::pair<std::vector<std::string>, int> incentivoParaEmpleadosconst (std::string& dni_empleado, const std::string& nombre, 
-                                            const std::string& apellidos, const std::string& telefono,
-                                            const std::string& correo_electronico, const std::string& puesto);
+    std::pair<std::vector<EmpleadoInfo>, int> incentivoParaEmpleados();
 
     /*========================= RF-4.6 =========================*/
     /**
