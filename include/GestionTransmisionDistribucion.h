@@ -56,9 +56,12 @@ public:
      * @param direccion Dirección del hogar.
      * @param dni_cliente DNI del cliente asociado al hogar.
      * @param id_contrato ID del contrato asociado al hogar.
+     * @param tipo_contrato Tipo de contrato del hogar.
+     * @param zona_geografica Zona geográfica del hogar.
      * @return true si la operación se realizó con éxito; false en caso contrario.
      */
-    bool altaHogar(const std::string& direccion, const std::string& dni_cliente, int id_contrato);
+    bool altaHogar(const std::string& direccion, const std::string& dni_cliente, int id_contrato, 
+                   const std::string& tipo_contrato = "", const std::string& zona_geografica = "");
 
     /* ========================= RF-1.2 ========================= */
     /**
@@ -85,34 +88,29 @@ public:
      * @brief Modifica los datos de un hogar existente.
      * @param direccion Dirección del hogar a modificar.
      * @param dni_cliente DNI del cliente asociado al hogar.
-     * @param cups Nuevo CUPS del contrato asociado al hogar.
-     * @param tipo_contrato Nuevo tipo de contrato del hogar.
-     * @param tarifa Nueva tarifa del contrato asociado al hogar.
-     * @param iban Nuevo IBAN del contrato asociado al hogar.
-     * @param fecha_inicio Nueva fecha de inicio del contrato asociado al hogar.
-     * @param fecha_fin Nueva fecha de fin del contrato asociado al hogar.
+     * @param nuevo_dni_cliente Nuevo DNI del cliente asociado al hogar.
+     * @param datos_contrato Estructura que contiene los nuevos datos del contrato asociado al hogar.
      * @return true si la operación se realizó con éxito; false en caso contrario.
      */
-    bool modificarHogar(const std::string& direccion, 
-                        const std::string& dni_cliente,
-                        const DatosContrato& datos_contrato);
+    bool modificarHogar(const std::string& direccion, const std::string& dni_cliente,
+                        const std::string& nuevo_dni_cliente, const DatosContrato& datos_contrato);
 
     /* ========================= RF-1.5 ========================= */
     /**
      * @brief Registra una incidencia relacionada con el suministro eléctrico de un hogar.
      * @param id_incidencia ID de la incidencia.
-     * @param tipo_incidencia Tipo de incidencia.
-     * @param descripcion Descripción de la incidencia.
      * @param id_contrato ID del contrato asociado al hogar.
+     * @param descripcion Descripción de la incidencia.
+     * @param tipo_incidencia Tipo de incidencia.
      * @param fecha_incidencia Fecha de la incidencia.
      * @param fecha_resolucion Fecha de resolución de la incidencia.
      * @param estado_incidencia Estado de la incidencia.
      * @return true si la operación se realizó con éxito; false en caso contrario.
      */
-    bool registrarIncidencia(int id_incidencia, const std::string& tipo_incidencia,
-                            const std::string& descripcion, int id_contrato,
-                            const std::string& fecha_incidencia, const std::string& fecha_resolucion,
-                            const std::string& estado_incidencia);
+    bool registrarIncidencia(int id_incidencia, int id_contrato,
+                             const std::string& descripcion, const std::string& tipo_incidencia,
+                             const std::string& fecha_incidencia, const std::string& fecha_resolucion,
+                             const std::string& estado_incidencia);
 };
 
 #endif // GESTION_TRANSMISION_DISTRIBUCION_H

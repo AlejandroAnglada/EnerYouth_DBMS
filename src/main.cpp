@@ -40,6 +40,7 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
             "Fecha_Inicio DATE DEFAULT SYSDATE NOT NULL,"
             "Fecha_Fin DATE,"
             "Estado VARCHAR(15) DEFAULT 'Activo' NOT NULL,"
+            "CONSTRAINT UQ_TIPO_CONTRATO UNIQUE (Tipo_Contrato),"
             "CONSTRAINT CHK_CONTRATO_ESTADO CHECK (Estado IN ('Activo', 'Baja')),"
             "CONSTRAINT CHK_POTENCIA CHECK (Potencia_Con > 3)"
         ");", SQL_NTS);
@@ -52,10 +53,11 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
             "Direccion VARCHAR(100) PRIMARY KEY NOT NULL,"
             "DNI_Cliente VARCHAR(9) NOT NULL,"
             "ID_Contrato_H NUMBER(9) NOT NULL,"
-            "Tipo_Contrato VARCHAR(20),"
+            "Tipo_Contrato_H VARCHAR(20),"
             "Zona_Geografica VARCHAR(100),"
             "FOREIGN KEY (DNI_Cliente) REFERENCES Cliente(DNI_CIF),"
-            "FOREIGN KEY (ID_Contrato_H) REFERENCES Contrato(ID_Contrato)"
+            "FOREIGN KEY (ID_Contrato_H) REFERENCES Contrato(ID_Contrato),"
+            "FOREIGN KEY (Tipo_Contrato_H) REFERENCES Contrato(Tipo_Contrato)"
         ");", SQL_NTS);
     if (retHogar != SQL_SUCCESS && retHogar != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "Error creando tabla Hogar\n";
@@ -204,14 +206,14 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, Direccion, sizeof(Direccion), NULL);
         SQLGetData(handler, 2, SQL_C_CHAR, DNI_Cliente, sizeof(DNI_Cliente), NULL);
-        SQLGetData(handler, 3, SQL_C_CHAR, Tipo_Contrato, sizeof(Tipo_Contrato), NULL);
-        SQLGetData(handler, 4, SQL_C_CHAR, Zona_Geografica, sizeof(Zona_Geografica), NULL);
-        SQLGetData(handler, 5, SQL_C_LONG, &ID_Contrato_H, 0, NULL);
+        SQLGetData(handler, 3, SQL_C_LONG, &ID_Contrato_H, 0, NULL);
+        SQLGetData(handler, 4, SQL_C_CHAR, Tipo_Contrato, sizeof(Tipo_Contrato), NULL);
+        SQLGetData(handler, 5, SQL_C_CHAR, Zona_Geografica, sizeof(Zona_Geografica), NULL);
         std::cout << "Direccion:"  << Direccion << "\n";
         std::cout << "DNI_Cliente:"  << DNI_Cliente << "\n";
+        std::cout << "ID_Contrato_H:"  << ID_Contrato_H << "\n";
         std::cout << "Tipo_Contrato:"  << Tipo_Contrato << "\n";
         std::cout << "Zona_Geografica:"  << Zona_Geografica << "\n";
-        std::cout << "ID_Contrato_H:"  << ID_Contrato_H << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -402,7 +404,7 @@ void gestionTransmisionDistribucion(GestionTransmisionDistribucion &hogares) {
     int opcion_hogar;
 
     do {
-        std::cout << "Gestion de Transmision/Distribucion de energia seleccionada.\n";
+        std::cout << "\nGestion de Transmision/Distribucion de energia seleccionada.\n";
         std::cout << "--Bienvenido al subsistema de gestion de transmision y distribucion de energia---\n";
         std::cout << "Aqui podra gestionar los hogares, contratos e incidencias relacionadas con la transmision y distribucion de energia.\n"; 
         std::cout << "\n===== MENU GESTION DE TRANSMISION/DISTRIBUCION DE ENERGIA =====\n";
@@ -417,7 +419,7 @@ void gestionTransmisionDistribucion(GestionTransmisionDistribucion &hogares) {
 
         switch (opcion_hogar) {
             case 1: {
-                std::string direccion, dni_cliente;
+                std::string direccion, dni_cliente, tipo_contrato, zona_geografica;
                 int id_contrato;
 
                 std::cin.ignore();
@@ -427,8 +429,13 @@ void gestionTransmisionDistribucion(GestionTransmisionDistribucion &hogares) {
                 std::getline(std::cin, dni_cliente);
                 std::cout << "Introduzca el ID del contrato asociado al hogar: ";
                 std::cin >> id_contrato;
+                std::cout << "Introduzca el tipo de contrato del contrato asociado al hogar: ";
+                std::cin.ignore();
+                std::getline(std::cin, tipo_contrato);
+                std::cout << "Introduzca la zona geografica del hogar: ";
+                std::getline(std::cin, zona_geografica);
 
-                if (hogares.altaHogar(direccion, dni_cliente, id_contrato)) {
+                if (hogares.altaHogar(direccion, dni_cliente, id_contrato, tipo_contrato, zona_geografica)) {
                     std::cout << "Hogar dado de alta correctamente.\n";
                 } else {
                     std::cout << "Error al dar de alta el hogar.\n";
@@ -468,13 +475,16 @@ void gestionTransmisionDistribucion(GestionTransmisionDistribucion &hogares) {
                 }
                 break;
             case 4: {
-                std::string direccion, dni_cliente;
+                std::string direccion, dni_cliente, nuevo_dni_cliente;
                 DatosContrato datos_contrato;
+
                 std::cin.ignore();
-                std::cout << "Introduzca la direccion del hogar a modificar (deje vacio para no modificar): ";
+                std::cout << "Introduzca el DNI del cliente: ";
+                std::getline(std::cin, dni_cliente);
+                std::cout << "Introduzca la direccion del hogar de dicho cliente que desea modificar: ";
                 std::getline(std::cin, direccion);
                 std::cout << "Introduzca el nuevo DNI del cliente asociado al hogar (deje vacio para no modificar): ";
-                std::getline(std::cin, dni_cliente);
+                std::getline(std::cin, nuevo_dni_cliente);
                 std::cout << "Introduzca el nuevo CUPS del contrato asociado al hogar (deje vacio para no modificar): ";
                 std::getline(std::cin, datos_contrato.cups);
                 std::cout << "Introduzca el nuevo tipo de contrato (deje vacio para no modificar): ";
@@ -482,12 +492,21 @@ void gestionTransmisionDistribucion(GestionTransmisionDistribucion &hogares) {
                 std::cout << "Introduzca la nueva tarifa (deje vacio para no modificar): ";
                 std::getline(std::cin, datos_contrato.tarifa);
                 std::cout << "Introduzca la nueva potencia contratada (deje vacio para no modificar): ";
-                std::cin >> datos_contrato.potencia_contratada;
-                if (hogares.modificarHogar(direccion, dni_cliente, datos_contrato)) {
+                std::string potencia_str;
+                std::getline(std::cin, potencia_str);
+
+                if (!potencia_str.empty()) {
+                    datos_contrato.potencia_contratada = std::stod(potencia_str);
+                } else {
+                    datos_contrato.potencia_contratada = -1;
+                }
+
+                if (hogares.modificarHogar(direccion, dni_cliente, nuevo_dni_cliente, datos_contrato)) {
                     std::cout << "Hogar modificado correctamente.\n";
                 } else {
                     std::cout << "Error al modificar el hogar.\n";
                 }
+
                 break;
             }
             case 5: {
@@ -506,12 +525,13 @@ void gestionTransmisionDistribucion(GestionTransmisionDistribucion &hogares) {
                 std::cin.ignore();
                 std::cout << "Introduzca la fecha de la incidencia (YYYY-MM-DD): ";
                 std::getline(std::cin, fecha_incidencia);
+                std::cin.ignore();
                 std::cout << "Introduzca la fecha de resolucion (YYYY-MM-DD): ";
                 std::getline(std::cin, fecha_resolucion);
                 std::cout << "Introduzca el estado de la incidencia: ";
                 std::getline(std::cin, estado_incidencia);
-                if (hogares.registrarIncidencia(id_incidencia, tipo_incidencia, descripcion_incidencia,
-                                               id_contrato_i, fecha_incidencia, fecha_resolucion,
+                if (hogares.registrarIncidencia(id_incidencia, id_contrato_i, descripcion_incidencia,
+                                               tipo_incidencia, fecha_incidencia, fecha_resolucion,
                                                estado_incidencia)) {
                     std::cout << "Incidencia registrada correctamente.\n";
                 } else {
@@ -527,6 +547,51 @@ void gestionTransmisionDistribucion(GestionTransmisionDistribucion &hogares) {
                 break;
         }
     } while (opcion_hogar != 6);
+}
+
+void crearTriggerActualizarDatosHogar(ConexionADB &conexion, SQLHSTMT handler) {
+    // Creamos un trigger (disparador) en la base de datos y si el trigger ya existiera, se reemplaza
+    // en caso de que se ejecutase varias veces para evitar errores.
+    // Con AFTER UPDATE le indicamos al trigger que se debe ejecutar despues de actualizar la tabla,
+    // para este caso la de Contrato y la de Cliente.
+    // El trigger se ejecutará para cada fila que se actualice, no una vez por la sentencia completa.
+    // Con OF (...) indicamos que se activa solo si se modifica la columna indica entre parentesis y 
+    // con ON (...) indicamos la tabla a la que pertenece el trigger.
+    // Todo el bloque que está entre BEGIN y END es lo que se ejecuta cuando el trigger se dispara, en este
+    // caso que se actualice la tabla Hogar con el nuevo Tipo_Contrato o DNI_Cliente debido a que son claves
+    // externas a esas tablas y daría error al intentar modificarlas manualmente.
+
+    SQLRETURN retTriggerTipoContrato = SQLExecDirectA(handler, (SQLCHAR*)
+        "CREATE OR REPLACE TRIGGER trg_update_tipo_contrato "
+        "AFTER UPDATE OF Tipo_Contrato ON Contrato "
+        "FOR EACH ROW "
+        "BEGIN "
+        "UPDATE Hogar "
+        "SET Tipo_Contrato_H = :NEW.Tipo_Contrato "
+        "WHERE ID_Contrato_H = :OLD.ID_Contrato; "
+        "END;", SQL_NTS);
+
+    if (retTriggerTipoContrato != SQL_SUCCESS && retTriggerTipoContrato != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando trigger trg_update_tipo_contrato\n";
+    } else {
+        std::cout << "Trigger trg_update_tipo_contrato creado correctamente.\n";
+    }
+    
+    SQLRETURN retTriggerDNICliente = SQLExecDirectA(handler, (SQLCHAR*)
+        "CREATE OR REPLACE TRIGGER trg_update_dni_cliente "
+        "AFTER UPDATE OF DNI_CIF ON Cliente "
+        "FOR EACH ROW "
+        "BEGIN "
+        "UPDATE Hogar "
+        "SET DNI_Cliente = :NEW.DNI_CIF "
+        "WHERE DNI_Cliente = :OLD.DNI_CIF; "
+        "END;", SQL_NTS);
+    
+    if (retTriggerDNICliente != SQL_SUCCESS && retTriggerDNICliente != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando trigger trg_update_dni_cliente\n";
+    } else {
+        std::cout << "Trigger trg_update_dni_cliente creado correctamente.\n";
+    }
 }
 
 int main(int argc, char ** argv){
@@ -563,6 +628,9 @@ int main(int argc, char ** argv){
 
     // Creamos las tablas (prueba)
     crearTablas(conexion, handler);
+
+    // Creamos el trigger para actualizar el tipo de contrato en Hogar al modificarlo en Contrato
+    crearTriggerActualizarDatosHogar(conexion, handler);
 
     // Inserto DNI en cliente e ID contrato en Contrato para poder dar de alta hogares
     int id_contrato = 1;
@@ -614,14 +682,14 @@ int main(int argc, char ** argv){
         std::cin >> opcion;
 
         switch (opcion) {
-            case 1:gestionTransmisionDistribucion(hogares); break;
+            case 1: gestionTransmisionDistribucion(hogares); break;
             case 2: 
 
             case 3: 
 
             case 4: 
 
-            case 5: 
+            case 5: mostrarContenidoTablas(conexion, handler); break;
 
             case 6: std::cout << "Saliendo...\n"; break;
             default: std::cout << "Opcion no valida.\n"; break;
