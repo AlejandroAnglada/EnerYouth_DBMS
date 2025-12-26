@@ -12,127 +12,159 @@
 
 
 void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
-    SQLExecDirectA(handler, (SQLCHAR*)
+    SQLRETURN retCliente = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Cliente ("
-            "DNI_CIF VARCHAR2(9) PRIMARY KEY NOT NULL,"
-            "Nombre VARCHAR2(20) NOT NULL,"
-            "Apellidos VARCHAR2(80) NOT NULL,"
-            "Direccion VARCHAR2(100) NOT NULL,"
-            "Telefono VARCHAR2(9) NOT NULL,"
-            "Email VARCHAR2(100) NOT NULL,"
-            "Estado VARCHAR2(10) DEFAULT 'Activo' NOT NULL,"
-            "CONSTRANUMBER UQ_CLIENTE_ID UNIQUE (DNI_CIF),"
+            "DNI_CIF VARCHAR(9) PRIMARY KEY NOT NULL,"
+            "Nombre VARCHAR(20) NOT NULL,"
+            "Apellidos VARCHAR(80) NOT NULL,"
+            "Direccion VARCHAR(100) NOT NULL,"
+            "Telefono VARCHAR(9) NOT NULL,"
+            "Email VARCHAR(100) NOT NULL,"
+            "Estado VARCHAR(10) DEFAULT 'Activo' NOT NULL,"
             "CONSTRAINT UQ_CLIENTE_EMAIL UNIQUE (Email),"
             "CONSTRAINT UQ_CLIENTE_TLF UNIQUE (Telefono),"
             "CONSTRAINT CHK_CLIENTE_ESTADO CHECK (Estado IN ('Activo', 'Inactivo'))"
         ");", SQL_NTS);
+    if (retCliente != SQL_SUCCESS && retCliente != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando tabla Cliente\n";
+    }
     
-    SQLExecDirectA(handler, (SQLCHAR*)
+    SQLRETURN retContrato = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Contrato ("
             "ID_Contrato NUMBER(9) PRIMARY KEY NOT NULL,"
-            "CUPS VARCHAR2(22) NOT NULL,"
-            "Tipo_Contrato VARCHAR2(20) NOT NULL,"
+            "CUPS VARCHAR(22) NOT NULL,"
+            "Tipo_Contrato VARCHAR(20) NOT NULL,"
             "Potencia_Con NUMBER(6,2) NOT NULL,"
-            "Tarifa VARCHAR2(20) NOT NULL,"
-            "IBAN VARCHAR2(34) NOT NULL,"
+            "Tarifa VARCHAR(20) NOT NULL,"
+            "IBAN VARCHAR(34) NOT NULL,"
             "Fecha_Inicio DATE DEFAULT SYSDATE NOT NULL,"
             "Fecha_Fin DATE,"
-            "Estado VARCHAR2(15) DEFAULT 'Activo' NOT NULL,"
+            "Estado VARCHAR(15) DEFAULT 'Activo' NOT NULL,"
             "CONSTRAINT CHK_CONTRATO_ESTADO CHECK (Estado IN ('Activo', 'Baja')),"
             "CONSTRAINT CHK_POTENCIA CHECK (Potencia_Con > 3)"
         ");", SQL_NTS);
+    if (retContrato != SQL_SUCCESS && retContrato != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando tabla Contrato\n";
+    }
 
-    SQLExecDirectA(handler, (SQLCHAR*)
+    SQLRETURN retHogar = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Hogar ("
-            "Direccion VARCHAR2(100) PRIMARY KEY NOT NULL,"
-            "DNI_Cliente VARCHAR2(9) NOT NULL,"
+            "Direccion VARCHAR(100) PRIMARY KEY NOT NULL,"
+            "DNI_Cliente VARCHAR(9) NOT NULL,"
             "ID_Contrato_H NUMBER(9) NOT NULL,"
-            "Tipo_Contrato VARCHAR2(20),"
-            "Zona_Geografica VARCHAR2(100),"
+            "Tipo_Contrato VARCHAR(20),"
+            "Zona_Geografica VARCHAR(100),"
             "FOREIGN KEY (DNI_Cliente) REFERENCES Cliente(DNI_CIF),"
             "FOREIGN KEY (ID_Contrato_H) REFERENCES Contrato(ID_Contrato)"
         ");", SQL_NTS);
+    if (retHogar != SQL_SUCCESS && retHogar != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando tabla Hogar\n";
+    }
 
-    SQLExecDirectA(handler, (SQLCHAR*)
+    SQLRETURN retIncidencia = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Incidencia ("
             "ID_Incidencia NUMBER(9) NOT NULL,"
             "ID_Contrato_I NUMBER(9) NOT NULL,"
-            "Descripcion_Incidencia VARCHAR2(200),"
-            "Tipo_Incidencia VARCHAR2(100),"
+            "Descripcion_Incidencia VARCHAR(200),"
+            "Tipo_Incidencia VARCHAR(100),"
             "Fecha_Incidencia DATE,"
             "Fecha_Resolucion DATE,"
-            "Estado_Incidencia VARCHAR2(50),"
+            "Estado_Incidencia VARCHAR(50),"
             "CONSTRAINT PK_INCIDENCIA PRIMARY KEY (ID_Incidencia, ID_Contrato_I),"
             "FOREIGN KEY (ID_Contrato_I) REFERENCES Contrato(ID_Contrato)"
         ");", SQL_NTS);
+    if (retIncidencia != SQL_SUCCESS && retIncidencia != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando tabla Incidencia\n";
+    }
 
-    SQLExecDirectA(handler, (SQLCHAR*)
+    SQLRETURN retInstalacionEnergetica = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Instalacion_Energetica ("
-            "Nombre_Fuente_Energetica VARCHAR2(60),"
-            "Direccion_Instalaciones VARCHAR2(180),"
-            "Descripcion VARCHAR2(180),"
+            "Nombre_Fuente_Energetica VARCHAR(60),"
+            "Direccion_Instalaciones VARCHAR(180),"
+            "Descripcion VARCHAR(180),"
             "Ingresos_Netos_Historicos NUMBER(20,2),"
             "Fecha_Fundacion DATE,"
             "Potencia_Actual NUMBER(3,0),"
             "CONSTRAINT Potencia_Valida CHECK (Potencia_Actual >= 0 AND Potencia_Actual <= 100),"
             "CONSTRAINT Clave_Primaria_IE PRIMARY KEY (Nombre_Fuente_Energetica, Direccion_Instalaciones)"
         ");", SQL_NTS);
+    if (retInstalacionEnergetica != SQL_SUCCESS && retInstalacionEnergetica != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando tabla Instalacion_Energetica\n";
+    }
     
-    SQLExecDirectA(handler, (SQLCHAR*)
+    SQLRETURN retCesionPotencia = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Cesion_Potencia ("
-            "FOREIGN KEY (Nombre_Fuente_Energetica_C) REFERENCES Instalacion_Energetica (Nombre_Fuente_Energetica),"
-            "FOREIGN KEY (Direccion_Instalaciones_C) REFERENCES Instalacion_Energetica (Direccion_Instalaciones),"
-            "FOREIGN KEY (Nombre_Fuente_Energetica_R) REFERENCES Instalacion_Energetica (Nombre_Fuente_Energetica),"
-            "FOREIGN KEY (Direccion_Instalaciones_R) REFERENCES Instalacion_Energetica (Direccion_Instalaciones),"
+            "Nombre_Fuente_Energetica_C VARCHAR(60) NOT NULL,"
+            "Direccion_Instalaciones_C VARCHAR(180) NOT NULL,"
+            "Nombre_Fuente_Energetica_R VARCHAR(60) NOT NULL,"
+            "Direccion_Instalaciones_R VARCHAR(180) NOT NULL,"
+            "FOREIGN KEY (Nombre_Fuente_Energetica_C, Direccion_Instalaciones_C) REFERENCES Instalacion_Energetica (Nombre_Fuente_Energetica, Direccion_Instalaciones),"
+            "FOREIGN KEY (Nombre_Fuente_Energetica_R, Direccion_Instalaciones_R) REFERENCES Instalacion_Energetica (Nombre_Fuente_Energetica, Direccion_Instalaciones),"
             "CONSTRAINT Clave_Primaria_CesPot PRIMARY KEY (Nombre_Fuente_Energetica_C, Direccion_Instalaciones_C)"
         ");", SQL_NTS);
+    if (retCesionPotencia != SQL_SUCCESS && retCesionPotencia != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando tabla Cesion_Potencia\n";
+    }
 
-    SQLExecDirectA(handler, (SQLCHAR*)
+    SQLRETURN retEmpleado = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Empleado ("
-            "DNI VARCHAR2(9) PRIMARY KEY NOT NULL,"
-            "Nombre VARCHAR2(20) NOT NULL,"
-            "Apellidos VARCHAR2(40) NOT NULL,"
-            "Telefono VARCHAR2(20),"
-            "Correo_Electronico VARCHAR2(30),"
-            "Posicion_Empresa VARCHAR2(20)"
+            "DNI VARCHAR(9) PRIMARY KEY NOT NULL,"
+            "Nombre VARCHAR(20) NOT NULL,"
+            "Apellidos VARCHAR(40) NOT NULL,"
+            "Telefono VARCHAR(20),"
+            "Correo_Electronico VARCHAR(30),"
+            "Posicion_Empresa VARCHAR(20)"
         ");", SQL_NTS);
+    if (retEmpleado != SQL_SUCCESS && retEmpleado != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando tabla Empleado\n";
+    }
 
-    SQLExecDirectA(handler, (SQLCHAR*)
+    SQLRETURN retSoluciona = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Soluciona ("
-            "DNI VARCHAR2(9) NOT NULL,"
+            "DNI VARCHAR(9) NOT NULL,"
             "ID_Incidencia NUMBER(9) NOT NULL,"
             "ID_Contrato_I NUMBER(9) NOT NULL,"
             "FOREIGN KEY (DNI) REFERENCES Empleado(DNI),"
-            "FOREIGN KEY (ID_Incidencia) REFERENCES Incidencia(ID_Incidencia),"
-            "FOREIGN KEY (ID_Contrato_I) REFERENCES Contrato(ID_Contrato),"
-            "PRIMARY KEY (DNI, ID_Incidencia, ID_Contrato_I)"
+            "FOREIGN KEY (ID_Incidencia, ID_Contrato_I) REFERENCES Incidencia (ID_Incidencia, ID_Contrato_I),"
+            "CONSTRAINT PK_SOLUCIONA PRIMARY KEY (DNI, ID_Incidencia, ID_Contrato_I)"
         ");", SQL_NTS);
+    if (retSoluciona != SQL_SUCCESS && retSoluciona != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando tabla Soluciona\n";
+    }
 
-    SQLExecDirectA(handler, (SQLCHAR*)
+    SQLRETURN retContratado = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Contratado ("
-            "DNI VARCHAR2(9) NOT NULL,"
-            "Direccion VARCHAR2(100) NOT NULL,"
+            "DNI VARCHAR(9) NOT NULL,"
+            "Direccion VARCHAR(100) NOT NULL,"
             "CONSTRAINT PK_Contratado PRIMARY KEY (DNI, Direccion),"
             "FOREIGN KEY (DNI) REFERENCES Cliente(DNI_CIF),"
             "FOREIGN KEY (Direccion) REFERENCES Hogar(Direccion)"
         ");", SQL_NTS);
+    if (retContratado != SQL_SUCCESS && retContratado != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando tabla Contratado\n";
+    }
 
-    SQLExecDirectA(handler, (SQLCHAR*)
+    SQLRETURN retRegistradaEn = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Registrada_en ("
             "ID_Incidencia NUMBER(9) NOT NULL,"
             "Contrato_asociado NUMBER(9) NOT NULL,"
-            "FOREIGN KEY (ID_Incidencia) REFERENCES Incidencia(ID_Incidencia),"
-            "FOREIGN KEY (Contrato_asociado) REFERENCES Contrato(ID_Contrato),"
+            "FOREIGN KEY (ID_Incidencia, Contrato_asociado) REFERENCES Incidencia (ID_Incidencia, ID_Contrato_I),"           "FOREIGN KEY (Contrato_asociado) REFERENCES Contrato(ID_Contrato),"
             "PRIMARY KEY (ID_Incidencia, Contrato_asociado)"
         ");", SQL_NTS);
+    if (retRegistradaEn != SQL_SUCCESS && retRegistradaEn != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando tabla Registrada_en\n";
+    }
 
-    SQLExecDirectA(handler, (SQLCHAR*)
+    SQLRETURN retAsociado = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Asociado ("
-            "DNI_Asociado VARCHAR2(9) NOT NULL,"
+            "DNI_Asociado VARCHAR(9) NOT NULL,"
             "ID_Contrato_A NUMBER(9) NOT NULL,"
             "FOREIGN KEY (DNI_Asociado) REFERENCES Cliente(DNI_CIF),"
             "CONSTRAINT PK_ASOCIADO PRIMARY KEY (DNI_Asociado, ID_Contrato_A)"
         ");", SQL_NTS);
+    if (retAsociado != SQL_SUCCESS && retAsociado != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando tabla Asociado\n";
+    }
 
     std::cout << "\nTablas creadas correctamente.\n";
 
@@ -144,23 +176,30 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Incidencia;", SQL_NTS);
     std::cout << "--Tabla Incidencia:--\n";
     SQLINTEGER ID_Incidencia, ID_Contrato_I;
-    SQLVARCHAR Descripcion_Incidencia[200], Tipo_Incidencia[100], Estado_Incidencia[50];
-    SQLDATE Fecha_Incidencia, Fecha_Resolucion;
+    SQLVARCHAR Descripcion_Incidencia[201], Tipo_Incidencia[101], Estado_Incidencia[51];
+    SQLCHAR Fecha_Incidencia[11], Fecha_Resolucion[11];
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_LONG, &ID_Incidencia, 0, NULL);
         SQLGetData(handler, 2, SQL_C_LONG, &ID_Contrato_I, 0, NULL);
         SQLGetData(handler, 3, SQL_C_CHAR, Descripcion_Incidencia, sizeof(Descripcion_Incidencia), NULL);
         SQLGetData(handler, 4, SQL_C_CHAR, Tipo_Incidencia, sizeof(Tipo_Incidencia), NULL);
         SQLGetData(handler, 7, SQL_C_CHAR, Estado_Incidencia, sizeof(Estado_Incidencia), NULL);
-        SQLGetData(handler, 5, SQL_C_DATE, &Fecha_Incidencia, 0, NULL);
-        SQLGetData(handler, 6, SQL_C_DATE, &Fecha_Resolucion, 0, NULL);
-        std::cout << ID_Incidencia << "\t" << ID_Contrato_I << "\n";
+        SQLGetData(handler, 5, SQL_C_CHAR, Fecha_Incidencia, sizeof(Fecha_Incidencia), NULL);
+        SQLGetData(handler, 6, SQL_C_CHAR, Fecha_Resolucion, sizeof(Fecha_Resolucion), NULL);
+        std::cout << "ID_Incidencia:" << ID_Incidencia << "\n";
+        std::cout << "ID_Contrato_I:" << ID_Contrato_I << "\n";
+        std::cout << "Descripcion_Incidencia:" << Descripcion_Incidencia << "\n";
+        std::cout << "Tipo_Incidencia:" << Tipo_Incidencia << "\n";
+        std::cout << "Estado_Incidencia:" << Estado_Incidencia << "\n";
+        std::cout << "Fecha_Incidencia:" << Fecha_Incidencia << "\n";
+        std::cout << "Fecha_Resolucion:" << Fecha_Resolucion << "\n\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     // Tabla Hogar
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Hogar;", SQL_NTS);
     std::cout << "\n--Tabla Hogar:--\n";
-    SQLVARCHAR Direccion[100], DNI_Cliente[9], Tipo_Contrato[20], Zona_Geografica[100];
+    SQLVARCHAR Direccion[101], DNI_Cliente[10], Tipo_Contrato[21], Zona_Geografica[101];
     SQLINTEGER ID_Contrato_H;
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, Direccion, sizeof(Direccion), NULL);
@@ -168,43 +207,58 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 3, SQL_C_CHAR, Tipo_Contrato, sizeof(Tipo_Contrato), NULL);
         SQLGetData(handler, 4, SQL_C_CHAR, Zona_Geografica, sizeof(Zona_Geografica), NULL);
         SQLGetData(handler, 5, SQL_C_LONG, &ID_Contrato_H, 0, NULL);
-        std::cout << Direccion << "\t" << DNI_Cliente << "\n";
+        std::cout << "Direccion:"  << Direccion << "\n";
+        std::cout << "DNI_Cliente:"  << DNI_Cliente << "\n";
+        std::cout << "Tipo_Contrato:"  << Tipo_Contrato << "\n";
+        std::cout << "Zona_Geografica:"  << Zona_Geografica << "\n";
+        std::cout << "ID_Contrato_H:"  << ID_Contrato_H << "\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     // Tabla Instalacion_Energetica
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Instalacion_Energetica;", SQL_NTS);
     std::cout << "\n--Tabla Instalacion_Energetica:--\n";
-    SQLVARCHAR Nombre_Fuente_Energetica[60], Direccion_Instalaciones[180], Descripcion[180];
+    SQLVARCHAR Nombre_Fuente_Energetica[61], Direccion_Instalaciones[181], Descripcion[181];
     SQLDOUBLE Ingresos_Netos_Historicos;
-    SQLDATE Fecha_Fundacion;
+    SQLCHAR Fecha_Fundacion[11];
     SQLINTEGER Potencia_Actual;
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, Nombre_Fuente_Energetica, sizeof(Nombre_Fuente_Energetica), NULL);
         SQLGetData(handler, 2, SQL_C_CHAR, Direccion_Instalaciones, sizeof(Direccion_Instalaciones), NULL);
         SQLGetData(handler, 3, SQL_C_CHAR, Descripcion, sizeof(Descripcion), NULL);
         SQLGetData(handler, 4, SQL_C_DOUBLE, &Ingresos_Netos_Historicos, 0, NULL);
-        SQLGetData(handler, 5, SQL_C_DATE, &Fecha_Fundacion, 0, NULL);
+        SQLGetData(handler, 5, SQL_C_CHAR, Fecha_Fundacion, sizeof(Fecha_Fundacion), NULL);
         SQLGetData(handler, 6, SQL_C_LONG, &Potencia_Actual, 0, NULL);
-        std::cout << Nombre_Fuente_Energetica << "\t" << Direccion_Instalaciones << "\n";
+        std::cout << "Nombre_Fuente_Energetica:" << Nombre_Fuente_Energetica << "\n";
+        std::cout << "Direccion_Instalaciones:" << Direccion_Instalaciones << "\n";
+        std::cout << "Descripcion:" << Descripcion << "\n";
+        std::cout << "Ingresos_Netos_Historicos:" << Ingresos_Netos_Historicos << "\n";
+        std::cout << "Fecha_Fundacion:" << Fecha_Fundacion << "\n";
+        std::cout << "Potencia_Actual:" << Potencia_Actual << "\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     // Tabla Cesion_Potencia
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Cesion_Potencia;", SQL_NTS);
     std::cout << "\n--Tabla Cesion_Potencia:--\n";
-    SQLVARCHAR Nombre_Fuente_Energetica_C[60], Direccion_Instalaciones_C[180];
-    SQLVARCHAR Nombre_Fuente_Energetica_R[60], Direccion_Instalaciones_R[180];
+    SQLVARCHAR Nombre_Fuente_Energetica_C[61], Direccion_Instalaciones_C[181];
+    SQLVARCHAR Nombre_Fuente_Energetica_R[61], Direccion_Instalaciones_R[181];
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, Nombre_Fuente_Energetica_C, sizeof(Nombre_Fuente_Energetica_C), NULL);
         SQLGetData(handler, 2, SQL_C_CHAR, Direccion_Instalaciones_C, sizeof(Direccion_Instalaciones_C), NULL);
         SQLGetData(handler, 3, SQL_C_CHAR, Nombre_Fuente_Energetica_R, sizeof(Nombre_Fuente_Energetica_R), NULL);
         SQLGetData(handler, 4, SQL_C_CHAR, Direccion_Instalaciones_R, sizeof(Direccion_Instalaciones_R), NULL);
-        std::cout << Nombre_Fuente_Energetica_C << "\t" << Direccion_Instalaciones_C << "\n";
+        std::cout << "Nombre_Fuente_Energetica_C:" << Nombre_Fuente_Energetica_C << "\n";
+        std::cout << "Direccion_Instalaciones_C:" << Direccion_Instalaciones_C << "\n";
+        std::cout << "Nombre_Fuente_Energetica_R:" << Nombre_Fuente_Energetica_R << "\n";
+        std::cout << "Direccion_Instalaciones_R:" << Direccion_Instalaciones_R << "\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
     
     // Tabla Empleado
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Empleado;", SQL_NTS); 
     std::cout << "\n--Tabla Empleado:--\n";
-    SQLVARCHAR DNI[9], Nombre[20], Apellidos[40], Telefono[20], Correo_Electronico[30], Posicion_Empresa[20];
+    SQLVARCHAR DNI[10], Nombre[21], Apellidos[41], Telefono[21], Correo_Electronico[31], Posicion_Empresa[21];
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, DNI, sizeof(DNI), NULL);
         SQLGetData(handler, 2, SQL_C_CHAR, Nombre, sizeof(Nombre), NULL);
@@ -212,35 +266,46 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 4, SQL_C_CHAR, Telefono, sizeof(Telefono), NULL);
         SQLGetData(handler, 5, SQL_C_CHAR, Correo_Electronico, sizeof(Correo_Electronico), NULL);
         SQLGetData(handler, 6, SQL_C_CHAR, Posicion_Empresa, sizeof(Posicion_Empresa), NULL);
-        std::cout << DNI << "\t" << Nombre << "\n";
+        std::cout << "DNI:" << DNI << "\n";
+        std::cout << "Nombre:" << Nombre << "\n";
+        std::cout << "Apellidos:" << Apellidos << "\n";
+        std::cout << "Telefono:" << Telefono << "\n";
+        std::cout << "Correo_Electronico:" << Correo_Electronico << "\n";
+        std::cout << "Posicion_Empresa:" << Posicion_Empresa << "\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     // Tabla Soluciona
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Soluciona;", SQL_NTS);
     std::cout << "\n--Tabla Soluciona:--\n";
-    SQLVARCHAR DNI_S[9];
+    SQLVARCHAR DNI_S[10];
     SQLINTEGER ID_Incidencia_S, ID_Contrato_I_S;
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, DNI_S, sizeof(DNI_S), NULL);
         SQLGetData(handler, 2, SQL_C_LONG, &ID_Incidencia_S, 0, NULL);
         SQLGetData(handler, 3, SQL_C_LONG, &ID_Contrato_I_S, 0, NULL);
-        std::cout << DNI_S << "\n";
+        std::cout << "DNI_S:" << DNI_S << "\n";
+        std::cout << "ID_Incidencia_S:" << ID_Incidencia_S << "\n";
+        std::cout << "ID_Contrato_I_S:" << ID_Contrato_I_S << "\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     // Tabla Contratado
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Contratado;", SQL_NTS);
     std::cout << "\n--Tabla Contratado:--\n";
-    SQLVARCHAR DNI_C[9], Direccion_C[100];
+    SQLVARCHAR DNI_C[10], Direccion_C[101];
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, DNI_C, sizeof(DNI_C), NULL);
         SQLGetData(handler, 2, SQL_C_CHAR, Direccion_C, sizeof(Direccion_C), NULL);
-        std::cout << DNI_C << "\t" << Direccion_C << "\n";
+        std::cout << "DNI_C:" << DNI_C << "\n";
+        std::cout << "Direccion_C:" << Direccion_C << "\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     // Tabla Cliente
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Cliente;", SQL_NTS);
     std::cout << "\n--Tabla Cliente:--\n";
-    SQLVARCHAR DNI_CIF[9], Nombre_Cl[20], Apellidos_Cl[80], Direccion_Cl[100], Telefono_Cl[9], Email_Cl[100];
+    SQLVARCHAR DNI_CIF[10], Nombre_Cl[21], Apellidos_Cl[81], Direccion_Cl[101], Telefono_Cl[10], Email_Cl[101], Estado[11];
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, DNI_CIF, sizeof(DNI_CIF), NULL);
         SQLGetData(handler, 2, SQL_C_CHAR, Nombre_Cl, sizeof(Nombre_Cl), NULL);
@@ -248,8 +313,16 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 4, SQL_C_CHAR, Direccion_Cl, sizeof(Direccion_Cl), NULL);
         SQLGetData(handler, 5, SQL_C_CHAR, Telefono_Cl, sizeof(Telefono_Cl), NULL);
         SQLGetData(handler, 6, SQL_C_CHAR, Email_Cl, sizeof(Email_Cl), NULL);
-        std::cout << DNI_CIF << "\t" << Nombre_Cl << "\n";
+        SQLGetData(handler, 7, SQL_C_CHAR, Estado, sizeof(Estado), NULL);
+        std::cout << "DNI_CIF:" << DNI_CIF << "\n";
+        std::cout << "Nombre_Cl:" << Nombre_Cl << "\n";
+        std::cout << "Apellidos_Cl:" << Apellidos_Cl << "\n";
+        std::cout << "Direccion_Cl:" << Direccion_Cl << "\n";
+        std::cout << "Telefono_Cl:" << Telefono_Cl << "\n";
+        std::cout << "Email_Cl:" << Email_Cl << "\n";
+        std::cout << "Estado:" << Estado << "\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     // Tabla Registrada_en
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Registrada_en;", SQL_NTS);
@@ -258,17 +331,18 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_LONG, &ID_Incidencia_R, 0, NULL);
         SQLGetData(handler, 2, SQL_C_LONG, &Contrato_asociado, 0, NULL);
-        std::cout << ID_Incidencia_R << "\t" << Contrato_asociado << "\n";
+        std::cout << "ID_Incidencia_R:" << ID_Incidencia_R << "\n";
+        std::cout << "Contrato_asociado:" << Contrato_asociado << "\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     // Tabla Contrato
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Contrato;", SQL_NTS);
     std::cout << "\n--Tabla Contrato:--\n";
     SQLINTEGER ID_Contrato;
-    SQLVARCHAR CUPS[22], Tipo_Contrato_Con[20], Tarifa[20], IBAN[34];
+    SQLVARCHAR CUPS[23], Tipo_Contrato_Con[21], Tarifa[21], IBAN[35], Estado_Con[16];
     SQLDOUBLE Potencia_Con;
-    SQLDATE Fecha_Inicio, Fecha_Fin;
-    SQLVARCHAR Estado[15];
+    SQLCHAR Fecha_Inicio[11], Fecha_Fin[11];
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_LONG, &ID_Contrato, 0, NULL);
         SQLGetData(handler, 2, SQL_C_CHAR, CUPS, sizeof(CUPS), NULL);
@@ -276,22 +350,33 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 4, SQL_C_DOUBLE, &Potencia_Con, 0, NULL);
         SQLGetData(handler, 5, SQL_C_CHAR, Tarifa, sizeof(Tarifa), NULL);
         SQLGetData(handler, 6, SQL_C_CHAR, IBAN, sizeof(IBAN), NULL);
-        SQLGetData(handler, 7, SQL_C_DATE, &Fecha_Inicio, 0, NULL);
-        SQLGetData(handler, 8, SQL_C_DATE, &Fecha_Fin, 0, NULL);
-        SQLGetData(handler, 9, SQL_C_CHAR, Estado, sizeof(Estado), NULL);
-        std::cout << ID_Contrato << "\t" << CUPS << "\n";
+        SQLGetData(handler, 7, SQL_C_CHAR, Fecha_Inicio, sizeof(Fecha_Inicio), NULL);
+        SQLGetData(handler, 8, SQL_C_CHAR, Fecha_Fin, sizeof(Fecha_Fin), NULL);
+        SQLGetData(handler, 9, SQL_C_CHAR, Estado_Con, sizeof(Estado_Con), NULL);
+        std::cout << "ID_Contrato:" << ID_Contrato << "\n";
+        std::cout << "CUPS:" << CUPS << "\n";
+        std::cout << "Tipo_Contrato_Con:" << Tipo_Contrato_Con << "\n";
+        std::cout << "Potencia_Con:" << Potencia_Con << "\n";
+        std::cout << "Tarifa:" << Tarifa << "\n";
+        std::cout << "IBAN:" << IBAN << "\n";
+        std::cout << "Fecha_Inicio:" << Fecha_Inicio << "\n";
+        std::cout << "Fecha_Fin:" << Fecha_Fin << "\n";
+        std::cout << "Estado_Con:" << Estado_Con << "\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     // Tabla Asociado
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Asociado;", SQL_NTS);
     std::cout << "\n--Tabla Asociado:--\n";
-    SQLVARCHAR DNI_Asociado[9];
+    SQLVARCHAR DNI_Asociado[10];
     SQLINTEGER ID_Contrato_A;
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, DNI_Asociado, sizeof(DNI_Asociado), NULL);
         SQLGetData(handler, 2, SQL_C_LONG, &ID_Contrato_A, 0, NULL);
-        std::cout << DNI_Asociado << "\n";
+        std::cout << "DNI_Asociado:" << DNI_Asociado << "\n";
+        std::cout << "ID_Contrato_A:" << ID_Contrato_A << "\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
 }
 
@@ -481,26 +566,35 @@ int main(int argc, char ** argv){
 
     // Inserto DNI en cliente e ID contrato en Contrato para poder dar de alta hogares
     int id_contrato = 1;
-    char cups[22] = "ES1234567890125689012";
-    char tipo_contrato[20] = "Residencial";
+    char cups[23] = "ES12345678901256890123";
+    char tipo_contrato[21] = "Residencial";
     double potencia_con = 5.5;
     char tarifa[20] = "Tarifa1";
-    char iban[34] = "ES7620770024003102575766";
+    char iban[35] = "ES7620770024003102575766";
     char contrato[2048];
     sprintf(contrato, "INSERT INTO Contrato (ID_Contrato, CUPS, Tipo_Contrato, Potencia_Con, Tarifa, IBAN) VALUES (%d, '%s', '%s', %f, '%s', '%s');", id_contrato, cups, tipo_contrato, potencia_con, tarifa, iban);
-    SQLExecDirectA(handler, (SQLCHAR*) contrato, SQL_NTS);
+    SQLRETURN retContrato = SQLExecDirectA(handler, (SQLCHAR*) contrato, SQL_NTS);
+    if (retContrato != SQL_SUCCESS && retContrato != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error ejecutando SQL\n";
+    }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     SQLEndTran(SQL_HANDLE_DBC, conexion.getConnection(), SQL_COMMIT);
 
-    char dni[9] = "1234568A";
-    char nombre[20] = "Juan";
-    char apellidos[80] = "Perez Gomez";
-    char direccion[100] = "Calle Falsa 123";
-    char telefono[9] = "60012346";
-    char email[100] = "juan@gmail.com";
+    char dni[10] = "12345678A";
+    char nombre[21] = "Juan";
+    char apellidos[81] = "Perez Gomez";
+    char direccion[101] = "Calle Falsa 123";
+    char telefono[10] = "600123468";
+    char email[101] = "juan@gmail.com";
     char cliente[2048];
     sprintf(cliente, "INSERT INTO Cliente (DNI_CIF, nombre, apellidos, direccion, telefono, email) VALUES ('%s', '%s', '%s', '%s', '%s', '%s');", dni, nombre, apellidos, direccion, telefono, email);
-    SQLExecDirectA(handler, (SQLCHAR*) cliente, SQL_NTS);
+    
+    SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*) cliente, SQL_NTS);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error ejecutando SQL\n";
+    }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     SQLEndTran(SQL_HANDLE_DBC, conexion.getConnection(), SQL_COMMIT);
     
