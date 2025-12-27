@@ -95,7 +95,7 @@ public:
      * @return true si la consulta fue exitosa; false en caso contrario.
      */
     bool consultarIngresosPorTipoEnergia(const std::string& tipoEnergia,
-                                         int& ingresos) const;
+                                         double& ingresos) const;
 
     /* ========================= RF-2.5 ========================= */
 
