@@ -116,7 +116,7 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
             "Apellidos VARCHAR(40) NOT NULL,"
             "Telefono VARCHAR(20),"
             "Correo_Electronico VARCHAR(30),"
-            "Posicion_Empresa VARCHAR(20),"
+            "Posicion_Empresa VARCHAR(20) DEFAULT 'Empleado General',"
             "Ventas NUMBER(9) DEFAULT 0,"
             "Incentivo NUMBER(10) DEFAULT 0"
         ");", SQL_NTS);
@@ -620,7 +620,7 @@ void gestionEmpleados(GestionEmpleados &empleados) {
         switch (opcion_empleado) {
             case 1: {
                 std::string dni_empleado, nombre, apellidos, telefono, correo_electronico, puesto;
-
+                bool creado = false;
                 std::cin.ignore();
                 std::cout << "Introduzca el DNI del empleado: ";
                 std::getline(std::cin, dni_empleado);
@@ -629,14 +629,20 @@ void gestionEmpleados(GestionEmpleados &empleados) {
                 std::cout << "Introduzca los apellidos del empleado: ";
                 std::getline(std::cin, apellidos);
                 std::cout << "Introduzca el número de teléfono del empleado: ";
-                std::cin.ignore();
                 std::getline(std::cin, telefono);
                 std::cout << "Introduzca el correo electrónico del empleado: ";
                 std::getline(std::cin, correo_electronico);
-                std::cout << "Introduzca el puesto del empleado en la empresa: ";
-                std::cin.ignore();
-                std::getline(std::cin, puesto);
-                if (empleados.contratarEmpleado(dni_empleado, nombre, apellidos, telefono, correo_electronico, puesto)) {
+                std::cout << "¿Desea solicitar un puesto concreto?: ";
+                std::string r;
+                std::getline(std::cin, r);
+                if (r == "si" || r == "Si" || r == "SI") {
+                    std::cout << "Introduzca el puesto deseado: ";
+                    std::getline(std::cin, puesto);
+                    creado = empleados.contratarEmpleado(dni_empleado, nombre, apellidos, telefono, correo_electronico, puesto);
+                } else {
+                    creado = empleados.contratarEmpleado(dni_empleado, nombre, apellidos, telefono, correo_electronico);
+                }
+                if (creado) {
                      std::cout << "Empleado contratado correctamente.\n";
                 } else {
                     std::cout << "Error al contratar el empleado.\n";
@@ -647,7 +653,7 @@ void gestionEmpleados(GestionEmpleados &empleados) {
                 {
                     std::string dni_empleado;
                     std::cin.ignore();
-                    std::cout << "Introduzca el DNI del empleado a despeddir: ";
+                    std::cout << "Introduzca el DNI del empleado a despedir: ";
                     std::getline(std::cin, dni_empleado);
 
                     if (empleados.despedirEmpleado(dni_empleado)) {
@@ -713,12 +719,14 @@ void gestionEmpleados(GestionEmpleados &empleados) {
                 std::getline(std::cin, dni_empleado);
                 std::cout << "Introduzca el ID de la incidencia a solucionar: ";
                 std::cin >> id_incidencia;
+                std::cin.ignore();
                 std::cout << "Introduzca el estado de la incidencia.";
                 std::getline(std::cin, estado_incidencia);
+
                 std::pair<std::string,std::string> solucion_incidecias = empleados.solucionIncidencias(dni_empleado, id_incidencia, estado_incidencia);
                 if (!solucion_incidecias.first.empty()) {
-                    std::cout << "DNI del empleado encargado:\n" << solucion_incidecias.first << "\n";
-                    std::cout << "Nuevo estado de la incidencia:\n" << solucion_incidecias.second << "\n";
+                    std::cout << "\nDNI del empleado encargado: " << solucion_incidecias.first << "\n";
+                    std::cout << "Nuevo estado de la incidencia: " << solucion_incidecias.second << "\n";
                 } else {
                     std::cout << "Error al solucionar la incidencia.\n";
                 }                     
@@ -740,32 +748,29 @@ void crearTriggerVentas(ConexionADB &conexion, SQLHSTMT handler) {
     //que la regla de negocio se cumpla siempre, independientemiente de que la actualización
     //venga desde la aplicación o directamente desde la base de datos.
     //
-    //AFTER UPDATE OF Ventas indica que el trigger se dispara después de modificar la columna Ventas
+    //BEFORE UPDATE OF Ventas indica que el trigger se dispara antes de modificar la columna Ventas
     //de la tabla Empleado.
     //
     //FOR EACH ROW indica que el trigger se ejecuta para cada fila que se actualice.
     //
     // El bloque entre BEGIN y END contiene la lógica del trigger:
     // - Si las ventas nuevas (:NEW.ventas) son mayores que 30, se calcula el incentivo como
-    //   (ventas - 30) * 100 y se actualiza la columna incentivo del empleado correspondiente.
+    //   (ventas - 30) * 10 y se actualiza la columna incentivo del empleado correspondiente.
     // - Si las ventas nuevas son 30 o menos, se establece el incentivo a 0.
 
-    SQLRETURN retTrigger = SQLExecDirectA(handler, (SQLCHAR*)
+    const char* triggerSQL =
         "CREATE OR REPLACE TRIGGER trg_calcular_incentivo_empleado "
-        "AFTER UPDATE OF Ventas ON Empleado "
+        "BEFORE UPDATE OF Ventas ON Empleado "
         "FOR EACH ROW "
         "BEGIN "
-        "   IF :NEW.Ventas > 30 THEN "
-        "       UPDATE Empleado "
-        "       SET Incentivo = (:NEW.ventas - 30)*100 "
-        "       WHERE DNI = :NEW.DNI; "
+        "   IF :NEW.Ventas IS NOT NULL AND :NEW.Ventas > 30 THEN "
+        "       :NEW.Incentivo := (:NEW.Ventas - 30)*10; "
         "   ELSE "
-        "       UPDATE Empleado "
-        "       SET Incentivo = 0 "
-        "       WHERE DNI = :NEW.DNI; "
+        "       :NEW.Incentivo := 0; "
         "   END IF; "
-        "END;", SQL_NTS);
+        "END;";
 
+    SQLRETURN retTrigger = SQLExecDirectA(handler, (SQLCHAR*)triggerSQL, SQL_NTS);
     if (retTrigger != SQL_SUCCESS && retTrigger != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "Error creando trigger trg_calcular_incentivo_empleado\n";
     } else {
@@ -812,6 +817,14 @@ int main(int argc, char ** argv){
 
     // Creamos el trigger para actualizar el tipo de contrato en Hogar al modificarlo en Contrato
     crearTriggerActualizarDatosHogar(conexion, handler);
+
+    SQLHSTMT handler_ventas;
+    handler_ventas = SQL_NULL_HSTMT;
+    SQLAllocHandle(SQL_HANDLE_STMT, con, &handler_ventas);
+    //Creamos el trigger para calcular incentivos al actualizar las ventas de un empleado
+    crearTriggerVentas(conexion, handler_ventas);
+    SQLFreeHandle(SQL_HANDLE_STMT, handler_ventas);
+
 
     // Inserto DNI en cliente e ID contrato en Contrato para poder dar de alta hogares
     int id_contrato = 1;

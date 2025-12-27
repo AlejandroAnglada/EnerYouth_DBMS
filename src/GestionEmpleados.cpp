@@ -5,7 +5,7 @@
 #include <algorithm>
 
 // Función para escapar comillas simples en cadenas SQL
-std::string escapeSQL(const std::string& str) {
+std::string escapeSQLE(const std::string& str) {
     std::string result;
     for (char c : str) {
         if (c == '\'') result += "''"; // duplicamos la comilla simple
@@ -15,7 +15,7 @@ std::string escapeSQL(const std::string& str) {
 }
 
 // Función para mostrar errores SQL
-void mostrarError(SQLHSTMT stmt) {
+void mostrarErrorE(SQLHSTMT stmt) {
     SQLCHAR sqlState[6], msg[SQL_MAX_MESSAGE_LENGTH];
     SQLINTEGER nativeError;
     SQLSMALLINT msgLen;
@@ -60,13 +60,13 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
 
         // Damos de alta el empleado
         char empleado[2048];
-        std::string dni_empleado_esc = escapeSQL(dni_empleado);
-        std::string nombre_esc = escapeSQL(nombre);
-        std::string apellidos_esc = escapeSQL(apellidos);
-        std::string telefono_esc = escapeSQL(telefono);
-        std::string correo_electronico_esc = escapeSQL(correo_electronico);
-        std::string puesto_esc = escapeSQL(puesto);
-        sprintf(empleado, "INSERT INTO Empleado (DNI_Empleado, Nombre, Apellidos, Telefono, Correo_Electronico, Puesto) "
+        std::string dni_empleado_esc = escapeSQLE(dni_empleado);
+        std::string nombre_esc = escapeSQLE(nombre);
+        std::string apellidos_esc = escapeSQLE(apellidos);
+        std::string telefono_esc = escapeSQLE(telefono);
+        std::string correo_electronico_esc = escapeSQLE(correo_electronico);
+        std::string puesto_esc = escapeSQLE(puesto);
+        sprintf(empleado, "INSERT INTO Empleado (DNI, Nombre, Apellidos, Telefono, Correo_Electronico, Posicion_Empresa) "
                           "VALUES ('%s', '%s', '%s', '%s', '%s', '%s');",
                                     dni_empleado_esc.c_str(), nombre_esc.c_str(), apellidos_esc.c_str(),      
                                     telefono_esc.c_str(), correo_electronico_esc.c_str(), puesto_esc.c_str());
@@ -74,7 +74,7 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
                                     SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)empleado, SQL_NTS);
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
             std::cout << "Error al ejecutar la sentencia SQL para contratar al empleado.\n";
-            mostrarError(handler);
+            mostrarErrorE(handler);
             SQLFreeHandle(SQL_HANDLE_STMT, handler);
             return false;
         }
@@ -102,12 +102,12 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
         }
         // Damos de baja el empleado
         char empleado[2048];
-        std::string dni_empleado_esc = escapeSQL(dni_empleado);
-        sprintf(empleado, "DELETE FROM Empleado WHERE DNI_Empleado = '%s';", dni_empleado_esc.c_str());
+        std::string dni_empleado_esc = escapeSQLE(dni_empleado);
+        sprintf(empleado, "DELETE FROM Empleado WHERE DNI = '%s';", dni_empleado_esc.c_str());
         SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)empleado, SQL_NTS);
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
             std::cout << "Error al ejecutar la sentencia SQL para despedir al empleado.\n";
-            mostrarError(handler);
+            mostrarErrorE(handler);
             SQLFreeHandle(SQL_HANDLE_STMT, handler);
             return false;
         }
@@ -133,10 +133,10 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             return empleados;
         }
         // Ejecutamos la consulta para obtener todos los empleados
-        SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)"SELECT DNI_Empleado, Nombre, Apellidos, Telefono, Correo_Electronico, Puesto FROM Empleado;", SQL_NTS);
+        SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)"SELECT DNI, Nombre, Apellidos, Telefono, Correo_Electronico, Posicion_Empresa, Ventas FROM Empleado;", SQL_NTS);
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
             std::cout << "Error al ejecutar la sentencia SQL para mostrar los empleados.\n";
-            mostrarError(handler);
+            mostrarErrorE(handler);
             SQLFreeHandle(SQL_HANDLE_STMT, handler);
             return empleados;
         }
@@ -148,6 +148,7 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
         char correo_buf[31];
         char puesto_buf[21];
         char ventas_buf[10];
+        char incentivo_buf[10];
         // Procesamos los resultados
         while (SQLFetch(handler) == SQL_SUCCESS) {
             SQLGetData(handler, 1, SQL_C_CHAR, dni_buf, sizeof(dni_buf), NULL);
@@ -156,7 +157,12 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             SQLGetData(handler, 4, SQL_C_CHAR, telefono_buf, sizeof(telefono_buf), NULL);
             SQLGetData(handler, 5, SQL_C_CHAR, correo_buf, sizeof(correo_buf), NULL);
             SQLGetData(handler, 6, SQL_C_CHAR, puesto_buf, sizeof(puesto_buf), NULL);
-            SQLGetData(handler, 7, SQL_C_CHAR, ventas_buf, sizeof(ventas_buf), NULL);
+            SQLLEN len_v = 0;
+            SQLGetData(handler, 7, SQL_C_CHAR, ventas_buf, sizeof(ventas_buf), &len_v);
+            if(len_v == SQL_NULL_DATA || len_v == 0) {
+                ventas_buf[0] = '0';
+                ventas_buf[1] = '\0';
+            }
             EmpleadoInfo empleado;
             empleado.dni_empleado = std::string(dni_buf);
             empleado.nombre = std::string(nombre_buf);
@@ -190,12 +196,12 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             return datos_modificados;
         }
         // Ejecutamos la consulta para obtener el empleado a modificar
-        std::string dni_empleado_esc = escapeSQL(dni_empleado);
-        std::string consulta = "SELECT DNI_Empleado, Nombre, Apellidos, Telefono, Correo_Electronico, Puesto FROM Empleado WHERE DNI_Empleado = '" + dni_empleado_esc + "';";
+        std::string dni_empleado_esc = escapeSQLE(dni_empleado);
+        std::string consulta = "SELECT DNI, Nombre, Apellidos, Telefono, Correo_Electronico, Posicion_Empresa FROM Empleado WHERE DNI = '" + dni_empleado_esc + "';";
         SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
             std::cout << "Error al ejecutar la sentencia SQL para modificar el empleado.\n";
-            mostrarError(handler);
+            mostrarErrorE(handler);
             SQLFreeHandle(SQL_HANDLE_STMT, handler);
             return datos_modificados;
         }
@@ -212,7 +218,7 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
         std::cin.ignore(); // Limpiar el buffer de entrada
         
 
-        while(n != 7){
+        do {
             std::cout << "Ingrese el número correspondiente al campo que desea modificar:\n";
             std::cout << "1. Nombre\n";
             std::cout << "2. Apellidos\n";
@@ -229,10 +235,11 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
                 case 2:campo = "Apellidos"; break;
                 case 3:campo = "Telefono"; break;
                 case 4:campo = "Correo_Electronico"; break;
-                case 5:campo = "Puesto"; break;
+                case 5:campo = "Posicion_Empresa"; break;
                 case 6:campo = "Ventas"; break;
                 case 7:{
                     std::cout << "Saliendo de la modificación de empleado.\n";
+                    return datos_modificados;
                     break;
                 }
                 default:
@@ -241,18 +248,18 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             std::string nuevo;
             std::cout << "Ingrese el nuevo " << campo << ":";
             std::getline(std::cin, nuevo);
-            std::string actualizar = "UPDATE Empleado SET " + campo + " = '" + escapeSQL(nuevo) + "' WHERE DNI_Empleado = '" + dni_empleado_esc + "';";
+            std::string actualizar = "UPDATE Empleado SET " + campo + " = '" + escapeSQLE(nuevo) + "' WHERE DNI = '" + dni_empleado_esc + "';";
                
             SQLRETURN retActualizar = SQLExecDirectA(handler, (SQLCHAR*)actualizar.c_str(), SQL_NTS);
             if (retActualizar != SQL_SUCCESS && retActualizar != SQL_SUCCESS_WITH_INFO) {
                 std::cout << "Error al ejecutar la sentencia SQL para actualizar el empleado.\n";
-                mostrarError(handler);
+                mostrarErrorE(handler);
                 SQLFreeHandle(SQL_HANDLE_STMT, handler);
                 return datos_modificados;
             } else {
                 datos_modificados += "Campo " + campo + " actualizado a " + nuevo + ".\n";
             }
-        }
+        } while(n != 7);
         
 
         // Liberamos recursos
@@ -276,10 +283,10 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             return incentivos;
         }
         // Comprobamos quién obtiene incentivo, número de ventas > 30
-        SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)"SELECT DNI_Empleado, Nombre, Apellidos, Telefono, Correo_Electronico, Puesto, Ventas FROM Empleado WHERE Ventas > 30;", SQL_NTS);
+        SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)"SELECT DNI, Nombre, Apellidos, Telefono, Correo_Electronico, Posicion_Empresa, Ventas FROM Empleado WHERE Ventas > 30;", SQL_NTS);
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
             std::cout << "Error al ejecutar la sentencia SQL para mostrar los empleados con incentivos.\n";
-            mostrarError(handler);
+            mostrarErrorE(handler);
             SQLFreeHandle(SQL_HANDLE_STMT, handler);
             return incentivos;
         }
@@ -310,8 +317,7 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
                 empleado.puesto = std::string(puesto_buf);
                 empleado.ventas = std::stoi(ventas_buf);
                 incentivos.first.push_back(empleado);
-                int incentivo = (std::stoi(ventas_buf) - 30) * 100; // Ejemplo: 100 unidades monetarias por cada venta extra sobre 30
-                incentivos.second += incentivo;
+                incentivos.second += empleado.incentivo;
             }
         }
         // Liberamos recursos
@@ -328,44 +334,94 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             return resultado;
         }
         SQLHDBC con = conexion.getConnection();
-        SQLHSTMT handler = SQL_NULL_HSTMT;
+        SQLHSTMT handler_empleado = SQL_NULL_HSTMT;
         
         // Inicializamos el handler para ejecutar la sentencia SQL
-        if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
+        if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler_empleado) != SQL_SUCCESS) {
             return resultado;
         }
         // Ejecutamos la consulta para obtener todos los empleados
-        SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)"SELECT DNI_Empleado, Nombre, Apellidos, Telefono, Correo_Electronico, Puesto FROM Empleado;", SQL_NTS);
+        std::string dni_empleado_esc = escapeSQLE(dni_empleado);
+        std::string consulta = "SELECT DNI, Nombre, Apellidos, Telefono, Correo_Electronico, Posicion_Empresa FROM Empleado WHERE DNI = '" + dni_empleado_esc + "';";
+        SQLRETURN ret = SQLExecDirectA(handler_empleado, (SQLCHAR*)consulta.c_str(), SQL_NTS);
+        
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
-            std::cout << "Error al ejecutar la sentencia SQL para mostrar los empleados.\n";
-            mostrarError(handler);
-            SQLFreeHandle(SQL_HANDLE_STMT, handler);
+            std::cout << "Error al ejecutar la sentencia SQL para modificar el empleado.\n";
+            mostrarErrorE(handler_empleado);
+            SQLFreeHandle(SQL_HANDLE_STMT, handler_empleado);
             return resultado;
         }
-        // Buffers para obtener los datos
-        char dni_buf[10];
-        // Procesamos los resultados
-        while (SQLFetch(handler) == SQL_SUCCESS) {
-            SQLGetData(handler, 1, SQL_C_CHAR, dni_buf, sizeof(dni_buf), NULL);
-            if(dni_empleado == std::string(dni_buf)){
-                resultado.first = dni_empleado;
-                break;
-            }
+       
+        // Comprobamos si el empleado existe
+        if (SQLFetch(handler_empleado) != SQL_SUCCESS) {
+            std::cout << "El empleado con DNI " << dni_empleado << " no existe.\n";
+            SQLFreeHandle(SQL_HANDLE_STMT, handler_empleado);
+            return resultado;;
+        }
+        
+        SQLFreeHandle(SQL_HANDLE_STMT, handler_empleado);
+
+        SQLHSTMT handler_estado = SQL_NULL_HSTMT;
+        if(SQLAllocHandle(SQL_HANDLE_STMT, con, &handler_estado) != SQL_SUCCESS) {
+            return resultado;
         }
         // Actualizamos el estado de la incidencia
-        std::string estado_esc = escapeSQL(estado_incidencia);
-        char actualizar[2048];
-        sprintf(actualizar, "UPDATE Incidencia SET Estado_Incidencia = '%s' WHERE ID_Incidencia = %d;", estado_esc.c_str(), id_incidencia);
-        SQLRETURN retActualizar = SQLExecDirectA(handler, (SQLCHAR*)actualizar, SQL_NTS);
+        std::string estado_esc = escapeSQLE(estado_incidencia);
+        std::string actualizar = "UPDATE Incidencia SET Estado_Incidencia = '" + estado_esc + "' WHERE ID_Incidencia = " +  std::to_string(id_incidencia);
+        SQLRETURN retActualizar = SQLExecDirectA(handler_estado, (SQLCHAR*)actualizar.c_str(), SQL_NTS);
         if (retActualizar != SQL_SUCCESS && retActualizar != SQL_SUCCESS_WITH_INFO) {
             std::cout << "Error al ejecutar la sentencia SQL para actualizar la incidencia.\n";
-            mostrarError(handler);
-            SQLFreeHandle(SQL_HANDLE_STMT, handler);
+            mostrarErrorE(handler_estado);
+            SQLFreeHandle(SQL_HANDLE_STMT, handler_estado);
             return resultado;
         }
-        resultado.second = estado_incidencia;
-        // Liberamos recursos
-        SQLFreeHandle(SQL_HANDLE_STMT, handler);
-        return resultado;
+        SQLFreeHandle(SQL_HANDLE_STMT, handler_estado);
+        
+        //Obtener ID_Contrato_I de la incidencia
+        int id_contrato_i;
+        SQLHSTMT handler_contrato = SQL_NULL_HSTMT;
 
+        if(SQLAllocHandle(SQL_HANDLE_STMT, con, &handler_contrato) != SQL_SUCCESS) {
+            return resultado;
+        }
+
+        std::string consulta_contrato = "SELECT ID_Contrato_I FROM Incidencia WHERE ID_Incidencia = '" + std::to_string(id_incidencia) + "';";
+        SQLRETURN ret_contrato = SQLExecDirectA(handler_contrato, (SQLCHAR*)consulta_contrato.c_str(), SQL_NTS);
+        if (ret_contrato != SQL_SUCCESS && ret_contrato != SQL_SUCCESS_WITH_INFO) {
+            std::cout << "Error al ejecutar la sentencia SQL para obtener el ID_Contrato_I.\n";
+            mostrarErrorE(handler_contrato);
+            SQLFreeHandle(SQL_HANDLE_STMT, handler_contrato);
+            return resultado;
+        }
+
+        if(SQLFetch(handler_contrato) != SQL_SUCCESS) {
+            std::cout << "No se encontró el contrato asociado a la incidencia " << id_incidencia << ".\n";
+            SQLFreeHandle(SQL_HANDLE_STMT, handler_contrato);
+            return resultado;
+        }
+
+        SQLGetData(handler_contrato, 1, SQL_C_LONG, &id_contrato_i, 0, NULL);
+        SQLFreeHandle(SQL_HANDLE_STMT, handler_contrato);
+
+        // Insertar en la tabla Soluciona
+        SQLHSTMT handler_soluciona = SQL_NULL_HSTMT;
+        if(SQLAllocHandle(SQL_HANDLE_STMT, con, &handler_soluciona) != SQL_SUCCESS) {
+            return resultado;
+        }
+        char soluciona[2048];
+        sprintf(soluciona, "INSERT INTO Soluciona (DNI, ID_Incidencia, ID_Contrato_I) "
+                           "VALUES ('%s', %d, %d);",
+                           dni_empleado_esc.c_str(), id_incidencia, id_contrato_i);
+        SQLRETURN ret_soluciona = SQLExecDirectA(handler_soluciona, (SQLCHAR*)soluciona, SQL_NTS);
+        if (ret_soluciona != SQL_SUCCESS && ret_soluciona != SQL_SUCCESS_WITH_INFO) {
+            std::cout << "Error al ejecutar la sentencia SQL para insertar en Soluciona.\n";
+            mostrarErrorE(handler_soluciona);
+            SQLFreeHandle(SQL_HANDLE_STMT, handler_soluciona);
+            return resultado;
+        }
+        SQLFreeHandle(SQL_HANDLE_STMT, handler_soluciona);
+        resultado.first = dni_empleado;
+        resultado.second = estado_incidencia;;
+        return resultado;
     }
+

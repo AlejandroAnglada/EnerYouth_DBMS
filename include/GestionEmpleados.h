@@ -59,7 +59,7 @@ public:
      */
     bool contratarEmpleado(const std::string& dni_empleado, const std::string& nombre, 
                            const std::string& apellidos, const std::string& telefono,
-                           const std::string& correo_electronico, const std::string& puesto = "");
+                           const std::string& correo_electronico, const std::string& puesto = "Empleado General");
 
 
     /* ========================= RF-4.2 ========================= */
