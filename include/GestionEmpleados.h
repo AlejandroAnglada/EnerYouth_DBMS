@@ -91,7 +91,7 @@ public:
      * @brief Calcula el incentivo para un empleado basado en su puesto.
      * @return vector de string con la infotmación de cada empleado que debe recibir incentivo y el incentivo correspondiente.
      */
-    std::pair<std::vector<EmpleadoInfo>, int> incentivoParaEmpleados();
+    std::vector<EmpleadoInfo> incentivoParaEmpleados();
 
     /*========================= RF-4.6 =========================*/
     /**

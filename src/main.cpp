@@ -264,6 +264,7 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Empleado;", SQL_NTS); 
     std::cout << "\n--Tabla Empleado:--\n";
     SQLVARCHAR DNI[10], Nombre[21], Apellidos[41], Telefono[21], Correo_Electronico[31], Posicion_Empresa[21];
+    SQLINTEGER Ventas, Incentivo;
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, DNI, sizeof(DNI), NULL);
         SQLGetData(handler, 2, SQL_C_CHAR, Nombre, sizeof(Nombre), NULL);
@@ -271,12 +272,16 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 4, SQL_C_CHAR, Telefono, sizeof(Telefono), NULL);
         SQLGetData(handler, 5, SQL_C_CHAR, Correo_Electronico, sizeof(Correo_Electronico), NULL);
         SQLGetData(handler, 6, SQL_C_CHAR, Posicion_Empresa, sizeof(Posicion_Empresa), NULL);
+        SQLGetData(handler, 7, SQL_C_LONG, &Ventas, 0, NULL);
+        SQLGetData(handler, 8, SQL_C_LONG, &Incentivo, 0, NULL);
         std::cout << "DNI:" << DNI << "\n";
         std::cout << "Nombre:" << Nombre << "\n";
         std::cout << "Apellidos:" << Apellidos << "\n";
         std::cout << "Telefono:" << Telefono << "\n";
         std::cout << "Correo_Electronico:" << Correo_Electronico << "\n";
         std::cout << "Posicion_Empresa:" << Posicion_Empresa << "\n";
+        std::cout << "Ventas:" << Ventas << "\n";
+        std::cout << "Incentivo:" << Incentivo << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -696,9 +701,9 @@ void gestionEmpleados(GestionEmpleados &empleados) {
             }
             case 5: {
                 
-                std::pair<std::vector<EmpleadoInfo>,int> incentivo_empleados = empleados.incentivoParaEmpleados();
+                std::vector<EmpleadoInfo> incentivo_empleados = empleados.incentivoParaEmpleados();
                     std::cout << "Empleados encontrados:\n";
-                    for (const auto& e : incentivo_empleados.first) {
+                    for (const auto& e : incentivo_empleados) {
                         std::cout << "DNI: " << e.dni_empleado << "\n";
                         std::cout << "Nombre: " << e.nombre << "\n";
                         std::cout << "Apellidos: " << e.apellidos << "\n";
@@ -706,7 +711,7 @@ void gestionEmpleados(GestionEmpleados &empleados) {
                         std::cout << "Correo Electronico: " << e.correo_electronico << "\n";
                         std::cout << "Puesto: " << e.puesto << "\n";
                         std::cout << "Ventas:" << e.ventas << "\n";
-                        std::cout << "Incentivo: " << incentivo_empleados.second << "\n\n";
+                        std::cout << "Incentivo: " << e.incentivo << "\n\n";
                     }               
                      break;
             }
@@ -786,7 +791,6 @@ int main(int argc, char ** argv){
     // Declaramos el entorno y la conexión:
     SQLHSTMT handler;
     ConexionADB conexion;
-
     // Pedimos las credenciales al usuario para conectarse a la db:
     std::string dsn = "practbd"; // Nombre del DSN, puesto por defecto tal y como en la explicación del S1
     std::cout << "Esperando credenciales...\n";

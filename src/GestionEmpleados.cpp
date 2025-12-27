@@ -248,8 +248,13 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             std::string nuevo;
             std::cout << "Ingrese el nuevo " << campo << ":";
             std::getline(std::cin, nuevo);
-            std::string actualizar = "UPDATE Empleado SET " + campo + " = '" + escapeSQLE(nuevo) + "' WHERE DNI = '" + dni_empleado_esc + "';";
-               
+            std::string actualizar;
+            if(campo == "Ventas"){
+                actualizar = "UPDATE Empleado SET " + campo + " = '" + nuevo + "' WHERE DNI = '" + dni_empleado_esc + "';";
+
+            } else {
+                actualizar = "UPDATE Empleado SET " + campo + " = '" + escapeSQLE(nuevo) + "' WHERE DNI = '" + dni_empleado_esc + "';";
+            }  
             SQLRETURN retActualizar = SQLExecDirectA(handler, (SQLCHAR*)actualizar.c_str(), SQL_NTS);
             if (retActualizar != SQL_SUCCESS && retActualizar != SQL_SUCCESS_WITH_INFO) {
                 std::cout << "Error al ejecutar la sentencia SQL para actualizar el empleado.\n";
@@ -269,8 +274,8 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
 
     /* ========================= RF-4.5 ========================= */
 
-    std::pair<std::vector<EmpleadoInfo>, int> GestionEmpleados::incentivoParaEmpleados (){
-        std::pair<std::vector<EmpleadoInfo>, int> incentivos;
+    std::vector<EmpleadoInfo> GestionEmpleados::incentivoParaEmpleados (){
+        std::vector<EmpleadoInfo> incentivos ={};
         //Comprobar que la conexión esté establecida
         if (!conexion.isConnected()) {
             return incentivos;
@@ -283,7 +288,7 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             return incentivos;
         }
         // Comprobamos quién obtiene incentivo, número de ventas > 30
-        SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)"SELECT DNI, Nombre, Apellidos, Telefono, Correo_Electronico, Posicion_Empresa, Ventas FROM Empleado WHERE Ventas > 30;", SQL_NTS);
+        SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)"SELECT DNI, Nombre, Apellidos, Telefono, Correo_Electronico, Posicion_Empresa, Ventas, Incentivo FROM Empleado WHERE Ventas > 30;", SQL_NTS);
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
             std::cout << "Error al ejecutar la sentencia SQL para mostrar los empleados con incentivos.\n";
             mostrarErrorE(handler);
@@ -297,7 +302,7 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
         char telefono_buf[21];
         char correo_buf[31];
         char puesto_buf[21];
-        char ventas_buf[10];
+        int ventas_buf, incentivo_buf;
         // Procesamos los resultados
         while (SQLFetch(handler) == SQL_SUCCESS) {
             SQLGetData(handler, 1, SQL_C_CHAR, dni_buf, sizeof(dni_buf), NULL);
@@ -306,8 +311,9 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             SQLGetData(handler, 4, SQL_C_CHAR, telefono_buf, sizeof(telefono_buf), NULL);
             SQLGetData(handler, 5, SQL_C_CHAR, correo_buf, sizeof(correo_buf), NULL);
             SQLGetData(handler, 6, SQL_C_CHAR, puesto_buf, sizeof(puesto_buf), NULL);
-            SQLGetData(handler, 7, SQL_C_CHAR, ventas_buf, sizeof(ventas_buf), NULL);
-            if(std::stoi(ventas_buf) > 30){
+            SQLGetData(handler, 7, SQL_C_LONG, &ventas_buf, 0, NULL);
+            SQLGetData(handler, 8, SQL_C_LONG, &incentivo_buf, 0, NULL);
+            if(ventas_buf > 30){
                 EmpleadoInfo empleado;
                 empleado.dni_empleado = std::string(dni_buf);
                 empleado.nombre = std::string(nombre_buf);
@@ -315,9 +321,9 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
                 empleado.telefono = std::string(telefono_buf);
                 empleado.correo_electronico = std::string(correo_buf);
                 empleado.puesto = std::string(puesto_buf);
-                empleado.ventas = std::stoi(ventas_buf);
-                incentivos.first.push_back(empleado);
-                incentivos.second += empleado.incentivo;
+                empleado.ventas = ventas_buf;
+                empleado.incentivo = incentivo_buf; 
+                incentivos.push_back(empleado);
             }
         }
         // Liberamos recursos
