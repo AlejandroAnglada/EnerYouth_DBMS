@@ -359,3 +359,154 @@ bool GestionRecursosEnergeticos::consultarIngresosPorTipoEnergia(
 
     return retorno;
 }
+
+// Vale, este requisito funcional es con diferencia el más largo y complejo de mi subsistema; así que voy a hacerlo
+// MUY poquito a poco y con mucho amor y cuidado, que va a ser un dolor de cabeza depurarlo :p
+// Ah, además voy a abandonar temporalmente la (buena) metodología de tener un sólo flujo porque es más sencillo
+// meter algunos "return false;" que tener POR LO MENOS 4 tabulaciones de indent por comprobar que el retorno sea
+// true en cada paso. Más legibilidad, un poco menos de depurabilidad, meh :p
+bool GestionRecursosEnergeticos::cederPotencia(
+    const std::string& dirCedente,
+    const std::string& dirReceptora,
+    int porcentaje)
+{
+    // ANTES DE NADA, debemos gestionar que una instalación NO se ceda potencia a sí misma. (Me acuerdo de la defensa
+    // de la P2; ahora ya sí puedo ponerlo explícitamente, je)
+    if(dirCedente == dirReceptora){
+        std::cerr << "ERROR: Una instalación no se puede ceder potencia a sí misma.\n";
+        return false;
+    }
+    // Valor por defecto: fallo. Asumimos fallo por, de nuevo, el overhead (me repito demasiado)
+    bool retorno = false;
+
+    // Comprobamos conexión.
+    if (!conexion.isConnected()) {
+        std::cerr << "ERROR: Conexión no establecida correctamente.\n";
+        return false;
+    }
+
+    // Declaramos conexión y handler.
+    SQLHDBC conex = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+    // Comprobamos que se ha declarado correctamente el handler.
+    SQLRETURN ret = SQLAllocHandle(SQL_HANDLE_STMT, conex, &handler);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "ERROR: No se pudo crear el handler.\n";
+        return false;
+    }
+
+    // Potencias de cada una de las instalaciones.
+    double potCed = 0.0;
+    double potRec = 0.0;
+    SQLLEN ind = 0;
+
+    /* ============================================================
+          1. OBTENEMOS POTENCIA DE LA INSTALACIÓN DE LA CEDENTE
+       ============================================================ */
+    // "q1" de query 1; primera consulta para ver potencias.
+    std::string q1 =
+        "SELECT Potencia_Actual "
+        "FROM Instalacion_Energetica "
+        "WHERE (Direccion_Instalaciones = '" + dirCedente + "')";
+
+    // Ejecutamos y extraemos los datos de la columna vista.
+    ret = SQLExecDirect(handler, (SQLCHAR*)q1.c_str(), SQL_NTS);
+    SQLBindCol(handler, 1, SQL_C_DOUBLE, &potCed, 0, &ind);
+    // Comprobamos que OK.
+    if (SQLFetch(handler) != SQL_SUCCESS) {
+        std::cerr << "ERROR: La instalación cedente no existe.\n";
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+    // Liberamos handler.
+    SQLFreeStmt(handler, SQL_CLOSE);
+
+    /* ============================================================
+            2. OBTENEMOS POTENCIA DE LA INSTALACIÓN RECEPTORA
+       ============================================================ */
+    // De nuevo, "q2" de query 2; segunda consulta.
+    std::string q2 =
+        "SELECT Potencia_Actual "
+        "FROM Instalacion_Energetica "
+        "WHERE (Direccion_Instalaciones = '" + dirReceptora + "')";
+    // Ejecutamos sentencia y guardamos datos.
+    ret = SQLExecDirect(handler, (SQLCHAR*)q2.c_str(), SQL_NTS);
+    SQLBindCol(handler, 1, SQL_C_DOUBLE, &potRec, 0, &ind);
+    // Comprobamos que OK.
+    if (SQLFetch(handler) != SQL_SUCCESS) {
+        std::cerr << "ERROR: La instalación receptora no existe.\n";
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    /* ============================================================
+                3. COMPROBAMOS RESTRICCIONES SEMÁNTICAS
+       ============================================================ */
+    if (potCed <= 65.0) {
+        std::cerr << "ERROR: La instalación cedente no supera el 65%.\n(VIOLACIÓN RS-2.5.1)";
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    if (potRec >= 35.0) {
+        std::cerr << "ERROR: La instalación receptora ya supera el 35%.\n(VIOLACIÓN RS-2.5.2)\n";
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    // Validación extra lógica
+    if (porcentaje <= 0 || porcentaje > 100) {
+        std::cerr << "ERROR: Porcentaje de cesión no válido.(Nota: Rango de cesión entre 0% y 100%.)\n";
+        return false;
+    }
+    if(potCed - porcentaje < 0.0 || potRec + porcentaje > 100.0){
+        std::cerr << "ERROR: Porcentaje de cesión no válido.\n(Nota: El cedente se queda en números rojos, o el receptor por encima del 100%).\n";
+        return false;
+    }
+
+    /* ============================================================
+                    4. ACTUALIZAMOS POTENCIA CEDENTE
+       ============================================================ */
+    // upd1 de "update 1"; actualizamos la potencia del cedente.
+    std::string upd1 =
+        "UPDATE Instalacion_Energetica "
+        "SET Potencia_Actual = Potencia_Actual - " + std::to_string(porcentaje) +
+        " WHERE (Direccion_Instalaciones = '" + dirCedente + "')";
+    // Ejecutamos
+    ret = SQLExecDirect(handler, (SQLCHAR*)upd1.c_str(), SQL_NTS);
+    // Comprobamos si OK.
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        SQLEndTran(SQL_HANDLE_DBC, conex, SQL_ROLLBACK);
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    /* ============================================================
+       5. ACTUALIZAMOS POTENCIA RECEPTORA
+       ============================================================ */
+    // No quiero repetirme, pero "upd2" de "update 2".
+    std::string upd2 =
+        "UPDATE Instalacion_Energetica "
+        "SET Potencia_Actual = Potencia_Actual + " + std::to_string(porcentaje) +
+        " WHERE (Direccion_Instalaciones = '" + dirReceptora + "')";
+    // Ejecutamos
+    ret = SQLExecDirect(handler, (SQLCHAR*)upd2.c_str(), SQL_NTS);
+    // Comprobamos si OK.
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        SQLEndTran(SQL_HANDLE_DBC, conex, SQL_ROLLBACK);
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    /* ============================================================
+       6. COMMIT FINAL
+       ============================================================ */
+    // Hacemos commit de la transacción
+    SQLEndTran(SQL_HANDLE_DBC, conex, SQL_COMMIT);
+    retorno = true;
+    // Liberamos recursos
+    SQLFreeHandle(SQL_HANDLE_STMT, handler);
+    // Fin :)
+    return retorno;
+}
+

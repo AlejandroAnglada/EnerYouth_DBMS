@@ -113,13 +113,15 @@ public:
     /* ========================= RF-2.6 ========================= */
 
     /**
-     * @brief Da de alta una nueva instalación energética en el sistema.
+     * @brief Añade un nuevo ingreso a la instalación seleccionada.
      * @param direccion Dirección de la instalación.
      * @param tipoEnergia Tipo de energía generada.
+     * @param cantidadAAñadir Cantidad que se debe añadir a los ingresos históricos de la fuente.
      * @return true si la operación se realizó con éxito; false en caso contrario.
      */
-    bool altaInstalacionEnergetica(const std::string& direccion,
-                                   const std::string& tipoEnergia);
+    bool anadirIngreso(const std::string& direccion,
+                       const std::string& tipoEnergia,
+                       const double& cantidadAAñadir);
 };
 
 #endif // GESTION_RECURSOS_ENERGETICOS_H
