@@ -158,33 +158,34 @@ bool GestionRecursosEnergeticos::consultarIngresosPorInstalacion(const std::stri
             ret = SQLExecDirect(handler,
                                 (SQLCHAR*)sql_sentence.c_str(),
                                 SQL_NTS);
-            SQLBindCol(handler,
-                       1,                  // Columna 1 (empieza en 1 porque sólo se recupera una columna)
-                       SQL_C_DOUBLE,       // Tipo de dato en C
-                       &ingresos_sql,      // Dónde guardar los ingresos
-                       0,                  // No hay realmente buffer, luego buffer len = 0
-                       &indicador);
-            // Recuperamos el valor
-            ret = SQLFetch(handler);
-
-            // Si no ha habido fallo:
+            
             if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
-                // Si todo bien, guardamos en ingresos el valor del BindCol.
-                ingresos = static_cast<double>(ingresos_sql);
-                // Todo OK
-                retorno = true;
-            } 
-            // Es posible que no se encuentren datos al hacer la consulta (No se usa NO_DATA porque usamos
-            // SUM, que jamás devuelve NO_DATA):
-            else if(ret == SQL_NULL_DATA){
-                std::cout << "WARNING: No se han encontrado columnas con estos datos.\n";
-                // De nuevo, error semántico y no sintáctico.
-                retorno = false;
-            } else {
-                std::cerr << "ERROR: No se pudo consultar el ingreso histórico.\n";
-                // No se necesita rollback; es un SELECT simple.
-        }
+                SQLBindCol(handler,
+                           1,                  // Columna 1 (empieza en 1 porque sólo se recupera una columna)
+                           SQL_C_DOUBLE,       // Tipo de dato en C
+                           &ingresos_sql,      // Dónde guardar los ingresos
+                           0,                  // No hay realmente buffer, luego buffer len = 0
+                           &indicador);
+                // Recuperamos el valor
+                ret = SQLFetch(handler);
 
+                // Si no ha habido fallo:
+                if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
+                    // Si el resultado de SUM no es NULL (indicador != SQL_NULL_DATA)
+                    if (indicador != SQL_NULL_DATA) {
+                        ingresos = static_cast<double>(ingresos_sql);
+                        retorno = true;
+                    } else {
+                        std::cout << "WARNING: No se han encontrado columnas con estos datos.\n";
+                        ingresos = 0.0;
+                        retorno = false;
+                    }
+                } else {
+                    std::cerr << "ERROR: No se pudo consultar el ingreso histórico.\n";
+                }
+            } else {
+                std::cerr << "ERROR: No se pudo ejecutar la consulta.\n";
+            }
 
             // Liberamos el handler de sentencia.
             SQLFreeHandle(SQL_HANDLE_STMT, handler);
@@ -411,14 +412,15 @@ bool GestionRecursosEnergeticos::cederPotencia(
 
     // Ejecutamos y extraemos los datos de la columna vista.
     ret = SQLExecDirect(handler, (SQLCHAR*)q1.c_str(), SQL_NTS);
-    SQLBindCol(handler, 1, SQL_C_DOUBLE, &potCed, 0, &ind);
-    // Comprobamos que OK.
-    if (SQLFetch(handler) != SQL_SUCCESS) {
-        std::cerr << "ERROR: La instalación cedente no existe.\n";
-        SQLFreeHandle(SQL_HANDLE_STMT, handler);
-        return false;
+    if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
+        SQLBindCol(handler, 1, SQL_C_DOUBLE, &potCed, 0, &ind);
+        if (SQLFetch(handler) != SQL_SUCCESS) {
+            std::cerr << "ERROR: La instalación cedente no existe.\n";
+            SQLFreeHandle(SQL_HANDLE_STMT, handler);
+            return false;
+        }
     }
-    // Liberamos handler.
+    // Liberamos el cursor para la siguiente consulta en el mismo handler.
     SQLFreeStmt(handler, SQL_CLOSE);
 
     /* ============================================================
@@ -431,13 +433,15 @@ bool GestionRecursosEnergeticos::cederPotencia(
         "WHERE (Direccion_Instalaciones = '" + dirReceptora + "')";
     // Ejecutamos sentencia y guardamos datos.
     ret = SQLExecDirect(handler, (SQLCHAR*)q2.c_str(), SQL_NTS);
-    SQLBindCol(handler, 1, SQL_C_DOUBLE, &potRec, 0, &ind);
-    // Comprobamos que OK.
-    if (SQLFetch(handler) != SQL_SUCCESS) {
-        std::cerr << "ERROR: La instalación receptora no existe.\n";
-        SQLFreeHandle(SQL_HANDLE_STMT, handler);
-        return false;
+    if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
+        SQLBindCol(handler, 1, SQL_C_DOUBLE, &potRec, 0, &ind);
+        if (SQLFetch(handler) != SQL_SUCCESS) {
+            std::cerr << "ERROR: La instalación receptora no existe.\n";
+            SQLFreeHandle(SQL_HANDLE_STMT, handler);
+            return false;
+        }
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
 
     /* ============================================================
                 3. COMPROBAMOS RESTRICCIONES SEMÁNTICAS
@@ -457,10 +461,12 @@ bool GestionRecursosEnergeticos::cederPotencia(
     // Validación extra lógica
     if (porcentaje <= 0 || porcentaje > 100) {
         std::cerr << "ERROR: Porcentaje de cesión no válido.(Nota: Rango de cesión entre 0% y 100%.)\n";
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
         return false;
     }
     if(potCed - porcentaje < 0.0 || potRec + porcentaje > 100.0){
         std::cerr << "ERROR: Porcentaje de cesión no válido.\n(Nota: El cedente se queda en números rojos, o el receptor por encima del 100%).\n";
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
         return false;
     }
 
@@ -510,3 +516,66 @@ bool GestionRecursosEnergeticos::cederPotencia(
     return retorno;
 }
 
+// RF-2.6, modificado levemente para que implementar un trigger sea algo más natural.
+bool GestionRecursosEnergeticos::anadirIngreso(
+    const std::string& direccion,
+    const std::string& tipoEnergia,
+    const double& cantidadAAñadir)
+{
+    // Valor por defecto: fallo (menos overhead)
+    bool retorno = false;
+    
+    // Aquí iba una comprobación de que la cantidad fuese > 0, pero como los ingresos son NETOS pueden ser negativos.
+
+    // Comprobamos conexión
+    if (!conexion.isConnected()) {
+        std::cerr << "ERROR: Conexión no establecida correctamente.\n";
+        return false;
+    }
+
+    // Declaramos conexión y handler.
+    SQLHDBC conex = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+    // Comprobamos que se hayan gestionado bien los recursos del handler.
+    SQLRETURN ret = SQLAllocHandle(SQL_HANDLE_STMT, conex, &handler);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "ERROR: No se pudo crear el handler de sentencia.\n";
+        return false;
+    }
+
+    // UPDATE (activará el trigger, en el main)
+    std::string sql_sentence =
+        "UPDATE Instalacion_Energetica "
+        "SET Ingresos_Netos_Historicos = Ingresos_Netos_Historicos + "
+        + std::to_string(cantidadAAñadir) +
+        " WHERE (Direccion_Instalaciones = '" + direccion + "' "
+        "AND Nombre_Fuente_Energetica = '" + tipoEnergia + "')";
+
+    ret = SQLExecDirect(handler,
+                        (SQLCHAR*)sql_sentence.c_str(),
+                        SQL_NTS);
+
+    // Si ejecución OK
+    if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
+        // Contamos las filas
+        SQLLEN filas = 0;
+        SQLRowCount(handler, &filas);
+        // Si sólo hay una fila (todo OK, bien identificado)
+        if (filas == 1) {
+            SQLEndTran(SQL_HANDLE_DBC, conex, SQL_COMMIT);
+            retorno = true;
+        // Si hay 0 o más de una (JAMÁS habrá más de una si está bien definido, pero es un caso contemplado en el else):
+        } else {
+            std::cout << "WARNING: No se ha actualizado ninguna instalación.\n";
+            SQLEndTran(SQL_HANDLE_DBC, conex, SQL_ROLLBACK);
+        }
+    // Si ejecución no-OK
+    } else {
+        std::cerr << "ERROR: No se pudo actualizar los ingresos.\n";
+        SQLEndTran(SQL_HANDLE_DBC, conex, SQL_ROLLBACK);
+    }
+    // Liberamos recursos
+    SQLFreeHandle(SQL_HANDLE_STMT, handler);
+    // Fin
+    return retorno;
+}
