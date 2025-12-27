@@ -279,3 +279,83 @@ bool GestionRecursosEnergeticos::consultarInstalacionesPorEnergia(
 
     return retorno;
 }
+
+bool GestionRecursosEnergeticos::consultarIngresosPorTipoEnergia(
+    const std::string& tipoEnergia,
+    double& ingresos) const 
+{
+    // Valor de retorno por defecto: fallo. Como ya he explicado, cuanto menos overhead tengamos, mejor.
+    bool retorno = false;
+
+    // Comprobamos que la conexión esté establecida.
+    if (conexion.isConnected()) {
+
+        // Variable donde almacenaremos el resultado SQL. Luego lo pasaremos a ingresos (pasado por referencia).
+        SQLDOUBLE ingresos_sql = 0.0;
+        SQLLEN indicador = 0;
+
+        // Conexión
+        SQLHDBC conex = conexion.getConnection();
+        // Handler
+        SQLHSTMT handler = SQL_NULL_HSTMT;
+
+        // Inicializamos el handler
+        SQLRETURN ret = SQLAllocHandle(SQL_HANDLE_STMT, conex, &handler);
+
+        if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
+
+            // Sentencia SQL: suma ingresos para ese tipo de energía. ¡Ojo, puede devolver null data!
+            std::string sql_sentence =
+                "SELECT SUM(Ingresos_Netos_Historicos) "
+                "FROM Instalacion_Energetica "
+                "WHERE (Nombre_Fuente_Energetica = '" + tipoEnergia + "')";
+
+            ret = SQLExecDirect(handler,
+                                (SQLCHAR*)sql_sentence.c_str(),
+                                SQL_NTS);
+
+            if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
+
+                // Asociamos la única columna resultante (solo seleccionamos un dato).
+                SQLBindCol(handler,
+                           1,
+                           SQL_C_DOUBLE,
+                           &ingresos_sql,
+                           0,
+                           &indicador);
+
+                // Recuperamos el valor
+                ret = SQLFetch(handler);
+                // Si todo bien:
+                if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
+                    // Si ha habido suma, es decir, han habido datos:
+                    if (indicador != SQL_NULL_DATA) {
+                        ingresos = static_cast<double>(ingresos_sql);
+                    } else {
+                        // Si no hay datos, devolvemos 0 por coherencia semántica
+                        ingresos = 0.0;
+                    }
+
+                    retorno = true;
+                }
+                else {
+                    std::cerr << "ERROR: No se pudo recuperar la fila de ingresos por tipo de energía.\n";
+                }
+
+            } else {
+                std::cerr << "ERROR: No se pudo ejecutar la consulta de ingresos por tipo de energía.\n";
+            }
+
+            // Liberamos handler
+            SQLFreeHandle(SQL_HANDLE_STMT, handler);
+
+        } else {
+            std::cerr << "ERROR: No se pudo crear el handler de sentencia.\n";
+        }
+
+    } else {
+        std::cerr << "ERROR: Conexión no establecida correctamente. Compruebe sus credenciales.\n";
+    }
+
+    return retorno;
+}
