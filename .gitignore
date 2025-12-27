@@ -5,6 +5,7 @@ EnerYouth
 # Archivos temporales compilados
 *.o
 *.obj
+*.exe
 
 # Mi configuración de VS Code
 .vscode/
