@@ -124,7 +124,7 @@ std::vector<HogarInfo> GestionTransmisionDistribucion::listarHogares(const std::
         return hogares;
     }
 
-    std::string consulta = "SELECT Direccion, DNI_Cliente, Tipo_Contrato FROM Hogar";
+    std::string consulta = "SELECT Direccion, DNI_Cliente, Tipo_Contrato_H FROM Hogar";
     bool tiene_condicion = false;
 
     if (!zona_geografica.empty()) {
@@ -153,7 +153,7 @@ std::vector<HogarInfo> GestionTransmisionDistribucion::listarHogares(const std::
         } else {
             consulta += " WHERE";
         }
-        consulta += " Tipo_Contrato = '" + escapeSQL(tipo_contrato) + "'";
+        consulta += " Tipo_Contrato_H = '" + escapeSQL(tipo_contrato) + "'";
     }
 
     consulta += ";";

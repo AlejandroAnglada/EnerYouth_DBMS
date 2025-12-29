@@ -152,17 +152,6 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
         std::cerr << "Error creando tabla Contratado\n";
     }
 
-    SQLRETURN retRegistradaEn = SQLExecDirectA(handler, (SQLCHAR*)
-        "CREATE TABLE Registrada_en ("
-            "ID_Incidencia NUMBER(9) NOT NULL,"
-            "Contrato_asociado NUMBER(9) NOT NULL,"
-            "FOREIGN KEY (ID_Incidencia, Contrato_asociado) REFERENCES Incidencia (ID_Incidencia, ID_Contrato_I),"           "FOREIGN KEY (Contrato_asociado) REFERENCES Contrato(ID_Contrato),"
-            "PRIMARY KEY (ID_Incidencia, Contrato_asociado)"
-        ");", SQL_NTS);
-    if (retRegistradaEn != SQL_SUCCESS && retRegistradaEn != SQL_SUCCESS_WITH_INFO) {
-        std::cerr << "Error creando tabla Registrada_en\n";
-    }
-
     SQLRETURN retAsociado = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE TABLE Asociado ("
             "DNI_Asociado VARCHAR(9) NOT NULL,"
@@ -337,18 +326,6 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
-    // Tabla Registrada_en
-    SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Registrada_en;", SQL_NTS);
-    std::cout << "\n--Tabla Registrada_en:--\n";
-    SQLINTEGER ID_Incidencia_R, Contrato_asociado;
-    while (SQLFetch(handler) == SQL_SUCCESS) {
-        SQLGetData(handler, 1, SQL_C_LONG, &ID_Incidencia_R, 0, NULL);
-        SQLGetData(handler, 2, SQL_C_LONG, &Contrato_asociado, 0, NULL);
-        std::cout << "ID_Incidencia_R:" << ID_Incidencia_R << "\n";
-        std::cout << "Contrato_asociado:" << Contrato_asociado << "\n";
-    }
-    SQLFreeStmt(handler, SQL_CLOSE);
-
     // Tabla Contrato
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Contrato;", SQL_NTS);
     std::cout << "\n--Tabla Contrato:--\n";
@@ -394,14 +371,13 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
 }
 
 void borrarTablas(ConexionADB &conexion, SQLHSTMT handler) {
-    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Soluciona;", SQL_NTS);
-    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Registrada_en;", SQL_NTS);
-    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Cesion_Potencia;", SQL_NTS);
-    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Contratado;", SQL_NTS);
-    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Asociado;", SQL_NTS);
-    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Incidencia;", SQL_NTS);
-    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Hogar;", SQL_NTS);
-    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Empleado;", SQL_NTS);
+    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Soluciona CASCADE CONSTRAINTS;", SQL_NTS);
+    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Cesion_Potencia CASCADE CONSTRAINTS;", SQL_NTS);
+    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Contratado CASCADE CONSTRAINTS;", SQL_NTS);
+    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Asociado CASCADE CONSTRAINTS;", SQL_NTS);
+    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Incidencia CASCADE CONSTRAINTS;", SQL_NTS);
+    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Hogar CASCADE CONSTRAINTS;", SQL_NTS);
+    SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Empleado CASCADE CONSTRAINTS;", SQL_NTS);
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Contrato;", SQL_NTS);
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Instalacion_Energetica;", SQL_NTS);
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Cliente;", SQL_NTS);
@@ -997,7 +973,7 @@ int main(int argc, char ** argv){
     sprintf(contrato, "INSERT INTO Contrato (ID_Contrato, CUPS, Tipo_Contrato, Potencia_Con, Tarifa, IBAN) VALUES (%d, '%s', '%s', %f, '%s', '%s');", id_contrato, cups, tipo_contrato, potencia_con, tarifa, iban);
     SQLRETURN retContrato = SQLExecDirectA(handler, (SQLCHAR*) contrato, SQL_NTS);
     if (retContrato != SQL_SUCCESS && retContrato != SQL_SUCCESS_WITH_INFO) {
-        std::cerr << "Error ejecutando SQL\n";
+        std::cerr << "Error insertando Contrato\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -1014,7 +990,7 @@ int main(int argc, char ** argv){
     
     SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*) cliente, SQL_NTS);
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
-        std::cerr << "Error ejecutando SQL\n";
+        std::cerr << "Error insertando Cliente\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
