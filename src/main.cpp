@@ -7,6 +7,7 @@
 #include <sqlext.h>
 #include <sqltypes.h>
 #include <string>
+#include <vector>
 #include "../include/ConexionADB.h"
 #include "../include/GestionTransmisionDistribucion.h"
 #include "../include/GestionEmpleados.h"
@@ -786,14 +787,45 @@ void crearTriggerVentas(ConexionADB &conexion, SQLHSTMT handler) {
 
 }
 
+// Pequeña función de lógica para confirmar/cancelar las opciones.
+bool confirmar(std::string seleccion){
+    char confirmacion = '\0';
+    bool romper = false;
+    std::cout << "Ha seleccionado: " << seleccion << ". ¿Continuar? (S/N): ";
+    do{
+        std::cin >> confirmacion;
+        if(tolower(confirmacion) != 'n')
+            romper = true;
+        else if(tolower(confirmacion) != 's' && tolower(confirmacion) != 'y')
+            std::cout << "Debe introducir un carácter válido.\n";
+    } while(tolower(confirmacion) != 'n' && tolower(confirmacion) != 's' && tolower(confirmacion) != 'y');
+    return romper;
+}
+
 // Interfaz para permitir al usuario seleccionar la funcionalidad pertinente de la gestión de recursos energéticos.
 // Se controla con un do-while, que contiene un switch-case sencillo. 
 // Se pasa la instancia de GestionRecursosEnergeticos como referencia para preservar la conexión 
 // referenciada en dicha clase.
 void gestionRecursosEnergeticos(GestionRecursosEnergeticos& gre){
     int seleccion = -1;
+    // Para confirmar
+    char confirmacion;
+    // Para volver a seleccionar opción por si se ha equivocado
+    bool romper = false;
+    // Variables caso 1:
+    std::string nombre211, descripcion211, direccion211, fecha211, ingresosTemp211, ingresos211 = "0.0", potenciaTemp211, potencia211 = "0.0";
+    // Variables caso 2:
+    std::string nombre212, direccion212;
+    // Variables caso 3:
+    std::string nombre22; double ingresos22 = -600.0;
+    // Variables caso 4:
+    std::string tipoEnergia23; std::vector<std::string> instalaciones23;
+    // Variables caso 5:
+    std::string tipoEnergia24; double ingresos24 = -600.0;
+    // Variables caso 6:
+    std::string nombreC24, direccionC24, nombreR24, direccionR24; int potencia24;
     do{
-        std::cout << "--- SUBSISTEMA DE GESTIÓN DE RECURSOS ENERGÉTICOS ---\n";
+        std::cout << "===== SUBSISTEMA DE GESTIÓN DE RECURSOS ENERGÉTICOS =====\n";
         std::cout << "Por favor, elija una opción de las siguientes:\n";
         std::cout << "0. Finalizar interacción con subsistema.\n";
         std::cout << "1. Dar de alta una nueva fuente energética.\n";
@@ -808,12 +840,98 @@ void gestionRecursosEnergeticos(GestionRecursosEnergeticos& gre){
             case 0:
                 break;
             case 1:
+                if(!confirmar("Dar de alta una nueva fuente energética"))
+                    break;
+                std::cout << "Introduzca los datos que le serán pedidos sobre la instalación a registrar.\n";
+                std::cout << "Para aceptar valores por defecto, dejar entrada estándar vacía.\n";
+                std::cout << "Nombre: ";
+                std::cin >> nombre211;
+                std::cout << "Descripción: ";
+                std::cin >> descripcion211;
+                std::cout << "Dirección: ";
+                std::cin >> direccion211;
+                std::cout << "Fecha (formato YYYY-MM-DD): ";
+                std::cin >> fecha211;
+                std::cout << "Ingresos (por defecto, 0.0€): ";
+                std::cin >> ingresosTemp211;
+                std::cout << "Potencia inicial (por defecto, 50.0%): ";
+                std::cin >> potenciaTemp211;
+                if(!ingresosTemp211.empty()) ingresos211 = ingresosTemp211;
+                if(!potenciaTemp211.empty()) potencia211 = potenciaTemp211;
+                if(!gre.altaFuenteEnergetica(nombre211, descripcion211, direccion211, fecha211, ingresos211, potencia211))
+                    std::cout << "Algo ha ido mal. No se han guardado cambios.\n";
+                break;
             case 2:
+                if(!confirmar("Dar de baja una fuente energética existente"))
+                    break;
+                std::cout << "Introduzca los datos que le serán pedidos sobre la instalación a borrar.\n";
+                std::cout << "Nombre: ";
+                std::cin >> nombre212;
+                std::cout << "Dirección: ";
+                std::cin >> direccion212;
+                if(!gre.bajaFuenteEnergetica(nombre212, direccion212))
+                    std::cout << "Algo ha salido mal. No se han guardado cambios.\n";
+                break;
             case 3:
+                if(!confirmar("Consultar ingresos por instalación"))
+                    break;
+                std::cout << "Introduzca los datos que le serán pedidos sobre la instalación.\n";
+                std::cout << "Nombre: ";
+                std::cin >> nombre22;
+                // Aquí no decimos nada de guardar cambios porque es un query; no hay cambios.
+                if(!gre.consultarIngresosPorInstalacion(nombre22, ingresos22))
+                    std::cout << "Algo ha salido mal.\n";
+                else
+                    std::cout << "Ingresos históricos de la instalación con nombre " << nombre22 << ": " << ingresos22 << ".\n";
+                break;
             case 4:
+                if(!confirmar("Consultar instalaciones por tipo de energía"))
+                    break;
+                std::cout << "Introduzca los datos que le serán pedidos sobre el tipo de energía.\n";
+                std::cout << "Descripción del tipo de energía: ";
+                std::cin >> tipoEnergia23;
+                if(!gre.consultarInstalacionesPorEnergia(tipoEnergia23, instalaciones23))
+                    std::cout << "Algo ha salido mal.";
+                else{
+                    if(!instalaciones23.empty()){
+                        std::cout << "Instalaciones con tipo de energía \"" << tipoEnergia23 << "\":\n";
+                        for(auto it = instalaciones23.begin(); it != instalaciones23.end(); it++)
+                            std::cout << *it << '\n';
+                    } else std::cout << "No se han encontrado instalaciones con tipo de energía \"" << tipoEnergia23 << "\".\n";
+                }
+                break;
             case 5:
+                if(!confirmar("Consultar ingresos por tipo de energía"))
+                    break;
+                std::cout << "Introduzca los datos que le serán pedidos sobre el tipo de energía.\n";
+                std::cout << "Descripción del tipo de energía: ";
+                std::cin >> tipoEnergia24;
+                if(!gre.consultarIngresosPorTipoEnergia(tipoEnergia24, ingresos24))
+                    std::cout << "Algo ha salido mal.\n";
+                else
+                    std::cout << "Ingresos históricos del tipo de energía \"" << tipoEnergia24 << "\": " << ingresos24 << ".\n";
+                break;
             case 6:
+                if(!confirmar("Ceder potencia de una instalación a otra"))
+                    break;
+                std::cout << "Introduzca los datos que le serán pedidos sobre las instalaciones cedente y receptora.\n";
+                std::cout << "Nombre de la instalación cedente: ";
+                std::cin >> nombreC24;
+                std::cout << "Dirección de la instalación cedente: ";
+                std::cin >> direccionC24;
+                std::cout << "Nombre de la instalación receptora: ";
+                std::cin >> nombreR24;
+                std::cout << "Dirección de la instalación receptora: ";
+                std::cin >> direccionR24;
+                std::cout << "Potencia a ceder: ";
+                std::cin >> potencia24;
+                if(!gre.cederPotencia(nombreC24, direccionC24, nombreR24, direccionR24, potencia24))
+                    std::cout << "Algo ha salido mal. No se han guardado cambios.\n";
+                break;
             case 7:
+                if(!confirmar("Añadir ingresos al histórico de una instalación"))
+                    break;
+                break;
             default:
                 std::cout << "Opción no válida. Inténtelo de nuevo.\n";
         }

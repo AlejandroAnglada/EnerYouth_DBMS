@@ -368,15 +368,18 @@ bool GestionRecursosEnergeticos::consultarIngresosPorTipoEnergia(
 // true en cada paso. Más legibilidad, un poco menos de depurabilidad, meh :p
 bool GestionRecursosEnergeticos::cederPotencia(
     const std::string& dirCedente,
+    const std::string& tipoCedente,
     const std::string& dirReceptora,
+    const std::string& tipoReceptora,
     int porcentaje)
 {
     // ANTES DE NADA, debemos gestionar que una instalación NO se ceda potencia a sí misma. (Me acuerdo de la defensa
     // de la P2; ahora ya sí puedo ponerlo explícitamente, je)
-    if(dirCedente == dirReceptora){
+    if(dirCedente == dirReceptora && tipoCedente == tipoReceptora){
         std::cerr << "ERROR: Una instalación no se puede ceder potencia a sí misma.\n";
         return false;
     }
+
     // Valor por defecto: fallo. Asumimos fallo por, de nuevo, el overhead (me repito demasiado)
     bool retorno = false;
 
@@ -408,7 +411,8 @@ bool GestionRecursosEnergeticos::cederPotencia(
     std::string q1 =
         "SELECT Potencia_Actual "
         "FROM Instalacion_Energetica "
-        "WHERE (Direccion_Instalaciones = '" + dirCedente + "')";
+        "WHERE (Direccion_Instalaciones = '" + dirCedente + "' "
+        "AND Nombre_Fuente_Energetica = '" + tipoCedente + "')";
 
     // Ejecutamos y extraemos los datos de la columna vista.
     ret = SQLExecDirect(handler, (SQLCHAR*)q1.c_str(), SQL_NTS);
@@ -430,7 +434,9 @@ bool GestionRecursosEnergeticos::cederPotencia(
     std::string q2 =
         "SELECT Potencia_Actual "
         "FROM Instalacion_Energetica "
-        "WHERE (Direccion_Instalaciones = '" + dirReceptora + "')";
+        "WHERE (Direccion_Instalaciones = '" + dirReceptora + "' "
+        "AND Nombre_Fuente_Energetica = '" + tipoReceptora + "')";
+
     // Ejecutamos sentencia y guardamos datos.
     ret = SQLExecDirect(handler, (SQLCHAR*)q2.c_str(), SQL_NTS);
     if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) {
@@ -473,14 +479,13 @@ bool GestionRecursosEnergeticos::cederPotencia(
     /* ============================================================
                     4. ACTUALIZAMOS POTENCIA CEDENTE
        ============================================================ */
-    // upd1 de "update 1"; actualizamos la potencia del cedente.
     std::string upd1 =
         "UPDATE Instalacion_Energetica "
         "SET Potencia_Actual = Potencia_Actual - " + std::to_string(porcentaje) +
-        " WHERE (Direccion_Instalaciones = '" + dirCedente + "')";
-    // Ejecutamos
+        " WHERE (Direccion_Instalaciones = '" + dirCedente + "' "
+        "AND Nombre_Fuente_Energetica = '" + tipoCedente + "')";
+
     ret = SQLExecDirect(handler, (SQLCHAR*)upd1.c_str(), SQL_NTS);
-    // Comprobamos si OK.
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
         SQLEndTran(SQL_HANDLE_DBC, conex, SQL_ROLLBACK);
         SQLFreeHandle(SQL_HANDLE_STMT, handler);
@@ -490,14 +495,13 @@ bool GestionRecursosEnergeticos::cederPotencia(
     /* ============================================================
        5. ACTUALIZAMOS POTENCIA RECEPTORA
        ============================================================ */
-    // No quiero repetirme, pero "upd2" de "update 2".
     std::string upd2 =
         "UPDATE Instalacion_Energetica "
         "SET Potencia_Actual = Potencia_Actual + " + std::to_string(porcentaje) +
-        " WHERE (Direccion_Instalaciones = '" + dirReceptora + "')";
-    // Ejecutamos
+        " WHERE (Direccion_Instalaciones = '" + dirReceptora + "' "
+        "AND Nombre_Fuente_Energetica = '" + tipoReceptora + "')";
+
     ret = SQLExecDirect(handler, (SQLCHAR*)upd2.c_str(), SQL_NTS);
-    // Comprobamos si OK.
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
         SQLEndTran(SQL_HANDLE_DBC, conex, SQL_ROLLBACK);
         SQLFreeHandle(SQL_HANDLE_STMT, handler);
@@ -507,14 +511,12 @@ bool GestionRecursosEnergeticos::cederPotencia(
     /* ============================================================
        6. COMMIT FINAL
        ============================================================ */
-    // Hacemos commit de la transacción
     SQLEndTran(SQL_HANDLE_DBC, conex, SQL_COMMIT);
     retorno = true;
-    // Liberamos recursos
     SQLFreeHandle(SQL_HANDLE_STMT, handler);
-    // Fin :)
     return retorno;
 }
+
 
 // RF-2.6, modificado levemente para que implementar un trigger sea algo más natural.
 bool GestionRecursosEnergeticos::anadirIngreso(

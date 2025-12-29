@@ -101,14 +101,19 @@ public:
 
     /**
      * @brief Cede potencia de una instalación a otra, cumpliendo las restricciones semánticas.
-     * @param instalacionCedente Dirección de la instalación que cede potencia.
-     * @param instalacionReceptora Dirección de la instalación que recibe potencia.
-     * @param potencia Potencia a ceder (en MWh).
+     * @param dirCedente Dirección de la instalación que cede potencia.
+     * @param tipoCedente Tipo de energía de la instalación que cede potencia.
+     * @param dirReceptora Dirección de la instalación que recibe potencia.
+     * @param tipoReceptora Tipo de energía de la instalación que recibe potencia.
+     * @param potencia Potencia a ceder (en %).
      * @return true si la operación se realizó con éxito; false en caso contrario.
      */
-    bool cederPotencia(const std::string& instalacionCedente,
-                       const std::string& instalacionReceptora,
-                       int potencia);
+    bool cederPotencia(    
+        const std::string& dirCedente,
+        const std::string& tipoCedente,
+        const std::string& dirReceptora,
+        const std::string& tipoReceptora,
+        int potencia);
 
     /* ========================= RF-2.6 ========================= */
 
