@@ -1,5 +1,6 @@
 #include "../include/GestionClientes.h"
 #include "../include/ConexionADB.h"
+#include <sqltypes.h>
 #include <iostream>
 #include <regex>        // Para validaciones básicas
 #include <sstream>      // Para conversiones simples
@@ -189,6 +190,47 @@ bool GestionClientes::existeContratoActivoPorCUPS(const std::string& cups) const
     SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
         std::cout << "Error al ejecutar la sentencia SQL para verificar contrato por CUPS.\n";
+        mostrarErrorC(handler);
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    // Comprobamos si existe el contrato
+    if (SQLFetch(handler) != SQL_SUCCESS) {
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    // Obtenemos el resultado
+    SQLINTEGER count = 0;
+    SQLGetData(handler, 1, SQL_C_SLONG, &count, 0, NULL);
+
+    // Liberamos recursos
+    SQLFreeHandle(SQL_HANDLE_STMT, handler);
+
+    return count > 0;
+}
+
+bool GestionClientes::existeContrato(int id_contrato) const {
+    // Comprobar que la conexión esté establecida
+    if (!conexion.isConnected()) {
+        return false;
+    }
+
+    SQLHDBC con = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+
+    // Inicializamos el handler para ejecutar la sentencia SQL
+    if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
+        return false;
+    }
+
+    // Ejecutamos la consulta
+    std::string consulta = "SELECT COUNT(*) FROM Contrato WHERE ID_Contrato = " + std::to_string(id_contrato) + ";";
+    
+    SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cout << "Error al ejecutar la sentencia SQL para verificar contrato.\n";
         mostrarErrorC(handler);
         SQLFreeHandle(SQL_HANDLE_STMT, handler);
         return false;
@@ -502,6 +544,312 @@ bool GestionClientes::consultarCliente(const std::string& dni_cif,
         std::cout << "  - Motivo Baja:       " << info.motivo_baja << "\n";
     }
     std::cout << "\n";
+
+    return true;
+}
+
+/* ========================= RF-3.3 ========================= */
+bool GestionClientes::actualizarCliente(const std::string& dni_cif,
+                                       const std::string& campo,
+                                       const std::string& valor_nuevo) {
+    // Comprobar que la conexión esté establecida
+    if (!conexion.isConnected()) {
+        std::cout << "Error: La conexión no está establecida.\n";
+        return false;
+    }
+
+    // Verificar que el cliente existe
+    if (!existeCliente(dni_cif)) {
+        std::cout << "Error: El cliente con DNI " << dni_cif << " no existe.\n";
+        return false;
+    }
+
+    // Mapear campos permitidos a columnas de BD
+    std::string columna;
+    if (campo == "nombre" || campo == "Nombre" || campo == "NOMBRE") {
+        columna = "Nombre";
+    } else if (campo == "apellidos" || campo == "Apellidos" || campo == "APELLIDOS") {
+        columna = "Apellidos";
+    } else if (campo == "direccion" || campo == "Direccion" || campo == "DIRECCION") {
+        columna = "Direccion";
+    } else if (campo == "telefono" || campo == "Telefono" || campo == "TELEFONO") {
+        columna = "Telefono";
+    } else if (campo == "email" || campo == "Email" || campo == "EMAIL") {
+        columna = "Correo_Electronico";
+    } else {
+        std::cout << "Error: Campo '" << campo << "' no válido.\n";
+        std::cout << "Campos permitidos: nombre, apellidos, direccion, telefono, email.\n";
+        return false;
+    }
+
+    // Validar según el tipo de campo
+    if (campo == "telefono" && !validarFormatoTelefono(valor_nuevo)) {
+        std::cout << "Error: Teléfono con formato incorrecto (debe ser 9 dígitos).\n";
+        return false;
+    }
+
+    if (campo == "email" && !validarFormatoEmail(valor_nuevo)) {
+        std::cout << "Error: Email con formato incorrecto.\n";
+        return false;
+    }
+
+    SQLHDBC con = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+
+    // Inicializamos el handler para ejecutar la sentencia SQL
+    if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
+        std::cout << "Error: No se pudo asignar handle ODBC.\n";
+        return false;
+    }
+
+    // Escapar valores
+    std::string dni_esc = escapeSQLC(dni_cif);
+    std::string valor_esc = escapeSQLC(valor_nuevo);
+
+    // Construimos la sentencia UPDATE
+    std::string consulta = "UPDATE Cliente SET " + columna + " = '" + valor_esc + "' WHERE DNI_CIF = '" + dni_esc + "';";
+
+    SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cout << "Error al ejecutar la sentencia SQL para actualizar cliente.\n";
+        mostrarErrorC(handler);
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    // Liberamos recursos
+    SQLFreeHandle(SQL_HANDLE_STMT, handler);
+
+    std::cout << "Campo '" << campo << "' actualizado correctamente a: " << valor_nuevo << "\n";
+    return true;
+}
+
+/* ========================= RF-3.4 ========================= */
+bool GestionClientes::crearContrato(const std::string& dni_cif,
+                                    const std::string& cups,
+                                    const std::string& tipo_contrato,
+                                    double potencia_con,
+                                    const std::string& tarifa,
+                                    const std::string& iban,
+                                    const std::string& fecha_inicio,
+                                    const std::string& fecha_fin) {
+    // Comprobar que la conexión esté establecida
+    if (!conexion.isConnected()) {
+        std::cout << "Error: La conexión no está establecida.\n";
+        return false;
+    }
+
+    // Verificar que el cliente existe
+    if (!existeCliente(dni_cif)) {
+        std::cout << "Error: El cliente con DNI " << dni_cif << " no existe.\n";
+        return false;
+    }
+
+    // Validar potencia
+    if (!validarPotencia(potencia_con)) {
+        std::cout << "Error: La potencia contratada debe ser mayor a 3 kW.\n";
+        return false;
+    }
+
+    // Validar IBAN
+    if (!validarFormatoIBAN(iban)) {
+        std::cout << "Error: IBAN con formato incorrecto.\n";
+        return false;
+    }
+
+    // Validar que la tarifa existe
+    if (!existeTarifa(tarifa)) {
+        std::cout << "Error: La tarifa '" << tarifa << "' no existe en el sistema.\n";
+        return false;
+    }
+
+    // Validar que no existe contrato activo con ese CUPS
+    if (existeContratoActivoPorCUPS(cups)) {
+        std::cout << "Error: Ya existe un contrato activo con CUPS " << cups << ".\n";
+        return false;
+    }
+
+    SQLHDBC con = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+
+    // Inicializamos el handler para ejecutar la sentencia SQL
+    if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
+        std::cout << "Error: No se pudo asignar handle ODBC.\n";
+        return false;
+    }
+
+    // Generamos el siguiente ID_Contrato
+    int id_contrato = generarSiguienteIDContrato();
+
+    // Escapar valores
+    std::string dni_esc = escapeSQLC(dni_cif);
+    std::string cups_esc = escapeSQLC(cups);
+    std::string tipo_esc = escapeSQLC(tipo_contrato);
+    std::string tarifa_esc = escapeSQLC(tarifa);
+    std::string iban_esc = escapeSQLC(iban);
+
+    // Construimos la sentencia INSERT
+    std::string consulta = "INSERT INTO Contrato (ID_Contrato, DNI_CIF, CUPS, Tipo_Contrato, Potencia_Con, Tarifa, IBAN, Fecha_Inicio, Fecha_Fin, Estado) "
+                          "VALUES (" + std::to_string(id_contrato) + ", '" + dni_esc + "', '" + cups_esc + "', '" + tipo_esc + "', "
+                          + std::to_string(potencia_con) + ", '" + tarifa_esc + "', '" + iban_esc + "', '" + fecha_inicio + "', ";
+    
+    // Controlamos que fecha_fin pueda ser opcional
+    if (fecha_fin.empty()) {
+        consulta += "NULL, 'Activo');";
+    } else {
+        consulta += "'" + fecha_fin + "', 'Activo');";
+    }
+
+    SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cout << "Error al ejecutar la sentencia SQL para crear contrato.\n";
+        mostrarErrorC(handler);
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    // Liberamos recursos
+    SQLFreeHandle(SQL_HANDLE_STMT, handler);
+
+    std::cout << "\nContrato creado correctamente:\n";
+    std::cout << "  - ID Contrato:       " << id_contrato << "\n";
+    std::cout << "  - DNI/CIF Cliente:   " << dni_cif << "\n";
+    std::cout << "  - CUPS:              " << cups << "\n";
+    std::cout << "  - Tipo Contrato:     " << tipo_contrato << "\n";
+    std::cout << "  - Potencia:          " << potencia_con << " kW\n";
+    std::cout << "  - Tarifa:            " << tarifa << "\n";
+    std::cout << "  - Estado:            Activo\n";
+    std::cout << "  - Fecha Inicio:      " << fecha_inicio << "\n";
+
+    return true;
+}
+
+bool GestionClientes::finalizarContrato(int id_contrato) {
+    // Comprobar que la conexión esté establecida
+    if (!conexion.isConnected()) {
+        std::cout << "Error: La conexión no está establecida.\n";
+        return false;
+    }
+
+    // Verificar que el contrato existe
+    if (!existeContrato(id_contrato)) {
+        std::cout << "Error: El contrato con ID " << id_contrato << " no existe.\n";
+        return false;
+    }
+
+    SQLHDBC con = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+
+    // Inicializamos el handler para ejecutar la sentencia SQL
+    if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
+        std::cout << "Error: No se pudo asignar handle ODBC.\n";
+        return false;
+    }
+
+    // Obtener fecha actual (YYYY-MM-DD)
+    time_t ahora = time(nullptr);
+    struct tm* timeinfo = localtime(&ahora);
+    char fecha_fin[11];
+    strftime(fecha_fin, sizeof(fecha_fin), "%Y-%m-%d", timeinfo);
+
+    // Construimos la sentencia UPDATE
+    std::string consulta = "UPDATE Contrato SET Estado = 'Finalizado', Fecha_Fin = '" + std::string(fecha_fin) + "' WHERE ID_Contrato = " + std::to_string(id_contrato) + ";";
+
+    SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cout << "Error al ejecutar la sentencia SQL para finalizar contrato.\n";
+        mostrarErrorC(handler);
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    // Liberamos recursos
+    SQLFreeHandle(SQL_HANDLE_STMT, handler);
+
+    std::cout << "Contrato ID " << id_contrato << " finalizado correctamente.\n";
+    std::cout << "Fecha de finalización: " << fecha_fin << "\n";
+
+    return true;
+}
+
+/* ========================= RF-3.5 ========================= */
+bool GestionClientes::bajaCliente(const std::string& dni_cif,
+                                  const std::string& fecha_baja,
+                                  const std::string& motivo_baja) {
+    // Comprobar que la conexión esté establecida
+    if (!conexion.isConnected()) {
+        std::cout << "Error: La conexión no está establecida.\n";
+        return false;
+    }
+
+    // Verificar que el cliente existe
+    if (!existeCliente(dni_cif)) {
+        std::cout << "Error: El cliente con DNI " << dni_cif << " no existe.\n";
+        return false;
+    }
+
+    SQLHDBC con = conexion.getConnection();
+    SQLHSTMT handler = SQL_NULL_HSTMT;
+
+    // Inicializamos el handler para ejecutar la sentencia SQL
+    if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
+        std::cout << "Error: No se pudo asignar handle ODBC.\n";
+        return false;
+    }
+
+    // Verificar que el cliente no tiene contratos activos
+    std::string dni_esc = escapeSQLC(dni_cif);
+    std::string consulta_contratos = "SELECT COUNT(*) FROM Contrato WHERE DNI_CIF = '" + dni_esc + "' AND Estado = 'Activo';";
+    
+    SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta_contratos.c_str(), SQL_NTS);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cout << "Error al ejecutar la sentencia SQL para verificar contratos activos.\n";
+        mostrarErrorC(handler);
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    // Obtenemos resultado de contratos activos
+    if (SQLFetch(handler) != SQL_SUCCESS) {
+        std::cout << "Error al obtener el número de contratos activos.\n";
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    SQLINTEGER num_contratos_activos = 0;
+    SQLGetData(handler, 1, SQL_C_SLONG, &num_contratos_activos, 0, NULL);
+
+    // Si tiene contratos activos no se puede dar de baja
+    if (num_contratos_activos > 0) {
+        std::cout << "Error: No se puede dar de baja al cliente. Tiene " << num_contratos_activos << " contrato(s) activo(s).\n";
+        std::cout << "Por favor, finalice los contratos antes de dar de baja al cliente.\n";
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    // Limpiar el statement para la siguiente consulta
+    SQLFreeStmt(handler, SQL_CLOSE);
+
+    // Escapar valores
+    std::string motivo_esc = escapeSQLC(motivo_baja);
+
+    // Sentencia UPDATE para dar de baja
+    std::string consulta_baja = "UPDATE Cliente SET Estado = 'Baja', Fecha_Baja = '" + fecha_baja + "', Motivo_Baja = '" + motivo_esc + "' WHERE DNI_CIF = '" + dni_esc + "';";
+
+    ret = SQLExecDirectA(handler, (SQLCHAR*)consulta_baja.c_str(), SQL_NTS);
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cout << "Error al ejecutar la sentencia SQL para dar de baja al cliente.\n";
+        mostrarErrorC(handler);
+        SQLFreeHandle(SQL_HANDLE_STMT, handler);
+        return false;
+    }
+
+    // Liberamos recursos
+    SQLFreeHandle(SQL_HANDLE_STMT, handler);
+
+    std::cout << "Cliente con DNI " << dni_cif << " dado de baja correctamente.\n";
+    std::cout << "Motivo de baja: " << motivo_baja << "\n";
+    std::cout << "Fecha de baja: " << fecha_baja << "\n";
 
     return true;
 }

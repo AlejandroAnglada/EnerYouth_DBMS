@@ -207,6 +207,13 @@ private:
     bool existeContratoActivoPorCUPS(const std::string& cups) const;
 
     /**
+     * @brief Verifica si existe un contrato con un determinado ID.
+     * @param id_contrato ID del contrato a verificar.
+     * @return true si el contrato existe; false en caso contrario.
+     */
+    bool existeContrato(int id_contrato) const;
+
+    /**
      * @brief Genera el siguiente ID_Cliente disponible.
      * @return Siguiente ID_Cliente disponible.
      */
