@@ -4,7 +4,7 @@ LDFLAGS = -lodbc
 
 SRC = $(wildcard src/*.cpp)
 
-TARGET = energyouth
+TARGET = EnerYouthDBMS.o
 
 all: $(TARGET)
 

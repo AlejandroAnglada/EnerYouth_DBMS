@@ -2,6 +2,31 @@
 #include "ConexionADB.h"
 #include <iostream>
 
+// TEMP
+void printSQLError(SQLSMALLINT handleType, SQLHANDLE handle)
+{
+    SQLCHAR sqlState[6];
+    SQLCHAR message[512];
+    SQLINTEGER native;
+    SQLSMALLINT len;
+
+    SQLGetDiagRec(
+            handleType,
+            handle,
+            1,
+            sqlState,
+            &native,
+            message,
+            sizeof(message),
+            &len
+        );
+
+        std::cerr << "ODBC ERROR [" << sqlState << "]: "
+                  << message << std::endl;
+    
+}
+
+
 GestionRecursosEnergeticos::GestionRecursosEnergeticos(ConexionADB& con) : conexion(con) {}
 
 bool GestionRecursosEnergeticos::altaFuenteEnergetica(
@@ -230,7 +255,7 @@ bool GestionRecursosEnergeticos::consultarInstalacionesPorEnergia(
             std::string sql_sentence =
                 "SELECT Direccion_Instalaciones "
                 "FROM Instalacion_Energetica "
-                "WHERE (Nombre_Fuente_Energetica = '" + tipoEnergia + "');";
+                "WHERE (Descripcion = '" + tipoEnergia + "');";
 
             ret = SQLExecDirect(handler,
                                 (SQLCHAR*)sql_sentence.c_str(),
@@ -311,7 +336,7 @@ bool GestionRecursosEnergeticos::consultarIngresosPorTipoEnergia(
             std::string sql_sentence =
                 "SELECT SUM(Ingresos_Netos_Historicos) "
                 "FROM Instalacion_Energetica "
-                "WHERE (Nombre_Fuente_Energetica = '" + tipoEnergia + "');";
+                "WHERE (Descripcion = '" + tipoEnergia + "');";
 
             ret = SQLExecDirect(handler,
                                 (SQLCHAR*)sql_sentence.c_str(),
