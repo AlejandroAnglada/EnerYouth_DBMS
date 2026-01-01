@@ -15,6 +15,7 @@
 #include "../include/GestionEmpleados.h"
 #include "../include/GestionRecursosEnergeticos.h"
 #include "../include/GestionClientes.h"
+#include "../include/funcionalidades_main.h"
 
 
 void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
