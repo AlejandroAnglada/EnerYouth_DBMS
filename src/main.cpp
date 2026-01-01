@@ -25,6 +25,12 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
             "Telefono VARCHAR(9) NOT NULL,"
             "Email VARCHAR(100) NOT NULL,"
             "Estado VARCHAR(10) DEFAULT 'Activo' NOT NULL,"
+            // Recien añadido
+            "ID_Cliente NUMBER(9) NOT NULL UNIQUE,"
+            "Fecha_Registro DATE DEFAULT SYSDATE NOT NULL,"
+            "Fecha_Baja DATE,"
+            "Motivo_Baja VARCHAR(200),"
+            // Recien añadido
             "CONSTRAINT UQ_CLIENTE_EMAIL UNIQUE (Email),"
             "CONSTRAINT UQ_CLIENTE_TLF UNIQUE (Telefono),"
             "CONSTRAINT CHK_CLIENTE_ESTADO CHECK (Estado IN ('Activo', 'Inactivo'))"
@@ -44,9 +50,12 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
             "Fecha_Inicio DATE DEFAULT SYSDATE NOT NULL,"
             "Fecha_Fin DATE,"
             "Estado VARCHAR(15) DEFAULT 'Activo' NOT NULL,"
+            "DNI_CIF VARCHAR(9) NOT NULL,"                      // Recien añadido
             "CONSTRAINT UQ_TIPO_CONTRATO UNIQUE (Tipo_Contrato),"
-            "CONSTRAINT CHK_CONTRATO_ESTADO CHECK (Estado IN ('Activo', 'Baja')),"
+            // Modificado añadiendo opciones de estado
+            "CONSTRAINT CHK_CONTRATO_ESTADO CHECK (Estado IN ('Activo', 'Suspendido', 'Finalizado')),"
             "CONSTRAINT CHK_POTENCIA CHECK (Potencia_Con > 3)"
+            "FOREIGN KEY (DNI_CIF) REFERENCES Cliente(DNI_CIF)" // Recien añadido
         ");", SQL_NTS);
     if (retContrato != SQL_SUCCESS && retContrato != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "Error creando tabla Contrato\n";
