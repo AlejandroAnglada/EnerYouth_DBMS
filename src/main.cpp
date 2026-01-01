@@ -822,27 +822,35 @@ void crearTriggerBloquearCesion(ConexionADB &conexion, SQLHSTMT handler) {
 
 
 // Pequeña función de lógica para confirmar/cancelar las opciones.
+// Pequeña función de lógica para confirmar/cancelar las opciones.
 bool confirmar(const std::string &seleccion){
-    char confirmacion = '\0';
 
-    std::cout << "Ha seleccionado: " << seleccion << ". ¿Continuar? (S/N): ";
+    std::string linea;
 
-    // Limpiamos por si quedó basura
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cout << "Ha seleccionado: " << seleccion
+              << ". ¿Continuar? (S/N): ";
 
-    do{
-        std::cin.get(confirmacion);
-        confirmacion = std::tolower(confirmacion);
+    while(true){
 
-        if(confirmacion != 's' && confirmacion != 'y' && confirmacion != 'n')
-            std::cout << "Debe introducir S/N: ";
+        std::getline(std::cin, linea);
 
-    } while(confirmacion != 's' && confirmacion != 'y' && confirmacion != 'n');
+        // Si está vacío, seguimos pidiendo
+        if(linea.empty()) {
+            std::cout << "Entrada no válida. Introduzca S/N: ";
+            continue;
+        }
 
-    return (confirmacion == 's' || confirmacion == 'y');
+        char c = std::tolower(linea[0]);  // Primer carácter válido
+
+        if(c == 's' || c == 'y')
+            return true;
+
+        if(c == 'n')
+            return false;
+
+        std::cout << "Entrada no válida. Introduzca S/N: ";
+    }
 }
-
-
 
 // Interfaz para permitir al usuario seleccionar la funcionalidad pertinente de la gestión de recursos energéticos.
 // Se controla con un do-while, que contiene un switch-case sencillo. 
@@ -1108,6 +1116,12 @@ int main(int argc, char ** argv){
     crearTriggerVentas(conexion, handler_ventas);
     SQLFreeHandle(SQL_HANDLE_STMT, handler_ventas);
 
+    SQLHSTMT handler_bloq_ces;
+    SQLAllocHandle(SQL_HANDLE_STMT, con, &handler_bloq_ces);
+    //Creamos el trigger para bloquear cesión de potencia si el cedente está en números rojos.
+    crearTriggerBloquearCesion(conexion, handler_bloq_ces);
+    SQLFreeHandle(SQL_HANDLE_STMT, handler_bloq_ces);
+
 
     // Inserto DNI en cliente e ID contrato en Contrato para poder dar de alta hogares
     int id_contrato = 1;
@@ -1164,7 +1178,7 @@ int main(int argc, char ** argv){
 
             case 3: gestionEmpleados(empleados); break;
 
-            case 4: 
+            case 4:
 
             case 5: mostrarContenidoTablas(conexion, handler); break;
 

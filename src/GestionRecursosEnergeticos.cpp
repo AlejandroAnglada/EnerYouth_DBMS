@@ -35,7 +35,7 @@ bool GestionRecursosEnergeticos::altaFuenteEnergetica(
             sql_sentence += "Ingresos_Netos_Historicos, Fecha_Fundacion, Potencia_Actual) ";
             sql_sentence += "VALUES ('" + nombre + "','" + direccion + "','" + descripcion + "','";
             sql_sentence += ingresos_netos + "', TO_DATE('" + fechaYYYYMMDD + "', 'YYYY-MM-DD'),'";
-            sql_sentence += potencia_actual + "')";
+            sql_sentence += potencia_actual + "');";
 
             // Ejecutamos la sentencia.
             ret = SQLExecDirect(handler,
@@ -230,7 +230,7 @@ bool GestionRecursosEnergeticos::consultarInstalacionesPorEnergia(
             std::string sql_sentence =
                 "SELECT Direccion_Instalaciones "
                 "FROM Instalacion_Energetica "
-                "WHERE (Nombre_Fuente_Energetica = '" + tipoEnergia + "')";
+                "WHERE (Nombre_Fuente_Energetica = '" + tipoEnergia + "');";
 
             ret = SQLExecDirect(handler,
                                 (SQLCHAR*)sql_sentence.c_str(),
@@ -311,7 +311,7 @@ bool GestionRecursosEnergeticos::consultarIngresosPorTipoEnergia(
             std::string sql_sentence =
                 "SELECT SUM(Ingresos_Netos_Historicos) "
                 "FROM Instalacion_Energetica "
-                "WHERE (Nombre_Fuente_Energetica = '" + tipoEnergia + "')";
+                "WHERE (Nombre_Fuente_Energetica = '" + tipoEnergia + "');";
 
             ret = SQLExecDirect(handler,
                                 (SQLCHAR*)sql_sentence.c_str(),
@@ -414,7 +414,7 @@ bool GestionRecursosEnergeticos::cederPotencia(
         "SELECT Potencia_Actual "
         "FROM Instalacion_Energetica "
         "WHERE (Direccion_Instalaciones = '" + dirCedente + "' "
-        "AND Nombre_Fuente_Energetica = '" + tipoCedente + "')";
+        "AND Nombre_Fuente_Energetica = '" + tipoCedente + "'):";
 
     // Ejecutamos y extraemos los datos de la columna vista.
     ret = SQLExecDirect(handler, (SQLCHAR*)q1.c_str(), SQL_NTS);
@@ -437,7 +437,7 @@ bool GestionRecursosEnergeticos::cederPotencia(
         "SELECT Potencia_Actual "
         "FROM Instalacion_Energetica "
         "WHERE (Direccion_Instalaciones = '" + dirReceptora + "' "
-        "AND Nombre_Fuente_Energetica = '" + tipoReceptora + "')";
+        "AND Nombre_Fuente_Energetica = '" + tipoReceptora + "');";
 
     // Ejecutamos sentencia y guardamos datos.
     ret = SQLExecDirect(handler, (SQLCHAR*)q2.c_str(), SQL_NTS);
@@ -485,7 +485,7 @@ bool GestionRecursosEnergeticos::cederPotencia(
         "UPDATE Instalacion_Energetica "
         "SET Potencia_Actual = Potencia_Actual - " + std::to_string(porcentaje) +
         " WHERE (Direccion_Instalaciones = '" + dirCedente + "' "
-        "AND Nombre_Fuente_Energetica = '" + tipoCedente + "')";
+        "AND Nombre_Fuente_Energetica = '" + tipoCedente + "');";
 
     ret = SQLExecDirect(handler, (SQLCHAR*)upd1.c_str(), SQL_NTS);
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
@@ -501,7 +501,7 @@ bool GestionRecursosEnergeticos::cederPotencia(
         "UPDATE Instalacion_Energetica "
         "SET Potencia_Actual = Potencia_Actual + " + std::to_string(porcentaje) +
         " WHERE (Direccion_Instalaciones = '" + dirReceptora + "' "
-        "AND Nombre_Fuente_Energetica = '" + tipoReceptora + "')";
+        "AND Nombre_Fuente_Energetica = '" + tipoReceptora + "');";
 
     ret = SQLExecDirect(handler, (SQLCHAR*)upd2.c_str(), SQL_NTS);
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
@@ -553,7 +553,7 @@ bool GestionRecursosEnergeticos::anadirIngreso(
         "SET Ingresos_Netos_Historicos = Ingresos_Netos_Historicos + "
         + std::to_string(cantidadAAñadir) +
         " WHERE (Direccion_Instalaciones = '" + direccion + "' "
-        "AND Nombre_Fuente_Energetica = '" + tipoEnergia + "')";
+        "AND Nombre_Fuente_Energetica = '" + tipoEnergia + "');";
 
     ret = SQLExecDirect(handler,
                         (SQLCHAR*)sql_sentence.c_str(),
