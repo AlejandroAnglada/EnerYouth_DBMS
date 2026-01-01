@@ -2,6 +2,8 @@
 #include "ConexionADB.h"
 #include <iostream>
 
+GestionRecursosEnergeticos::GestionRecursosEnergeticos(ConexionADB& con) : conexion(con) {}
+
 bool GestionRecursosEnergeticos::altaFuenteEnergetica(
     const std::string& nombre, 
     const std::string& descripcion, 

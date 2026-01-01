@@ -1060,7 +1060,7 @@ void gestionRecursosEnergeticos(GestionRecursosEnergeticos& gre){
 
 
 int main(int argc, char ** argv){
-    std::string user, pwd;
+    std::string user, pwd, dsnTemp;
     int opcion;
 
     // Declaramos el entorno y la conexión:
@@ -1069,6 +1069,9 @@ int main(int argc, char ** argv){
     // Pedimos las credenciales al usuario para conectarse a la db:
     std::string dsn = "practbd"; // Nombre del DSN, puesto por defecto tal y como en la explicación del S1
     std::cout << "Esperando credenciales...\n";
+    std::cout << "DSN (por defecto 'practbd'; dejar en blanco si quiere usar esa): ";
+    std::cin >> dsnTemp;
+    if(!dsnTemp.empty()) dsn = dsnTemp;
     std::cout << "Usuario: ";
     std::cin >> user;
     std::cout << "Password: ";
