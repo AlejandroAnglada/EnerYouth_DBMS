@@ -180,6 +180,12 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
 }
 
 void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
+
+    if(!conexion.isConnected()){
+        std::cerr << "ERROR DE CONEXIÓN\n";
+        return;
+    }
+
     // Tabla Incidencia
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Incidencia;", SQL_NTS);
     std::cout << "--Tabla Incidencia:--\n";
@@ -382,6 +388,12 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
 }
 
 void borrarTablas(ConexionADB &conexion, SQLHSTMT handler) {
+
+    if(!conexion.isConnected()){
+        std::cerr << "ERROR DE CONEXIÓN\n";
+        return;
+    }
+
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Soluciona CASCADE CONSTRAINTS;", SQL_NTS);
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Cesion_Potencia CASCADE CONSTRAINTS;", SQL_NTS);
     SQLExecDirectA(handler, (SQLCHAR*) "DROP TABLE Contratado CASCADE CONSTRAINTS;", SQL_NTS);
@@ -559,6 +571,11 @@ void crearTriggerActualizarDatosHogar(ConexionADB &conexion, SQLHSTMT handler) {
     // Todo el bloque que está entre BEGIN y END es lo que se ejecuta cuando el trigger se dispara, en este
     // caso que se actualice la tabla Hogar con el nuevo Tipo_Contrato o DNI_Cliente debido a que son claves
     // externas a esas tablas y daría error al intentar modificarlas manualmente.
+
+    if(!conexion.isConnected()){
+        std::cerr << "ERROR DE CONEXIÓN\n";
+        return;
+    }
 
     SQLRETURN retTriggerTipoContrato = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE OR REPLACE TRIGGER trg_update_tipo_contrato "
@@ -753,6 +770,11 @@ void crearTriggerVentas(ConexionADB &conexion, SQLHSTMT handler) {
     //   (ventas - 30) * 10 y se actualiza la columna incentivo del empleado correspondiente.
     // - Si las ventas nuevas son 30 o menos, se establece el incentivo a 0.
 
+    if(!conexion.isConnected()){
+        std::cerr << "ERROR DE CONEXIÓN\n";
+        return;
+    }
+
     const char* triggerSQL =
         "CREATE OR REPLACE TRIGGER trg_calcular_incentivo_empleado "
         "BEFORE UPDATE OF Ventas ON Empleado "
@@ -794,6 +816,11 @@ void crearTriggerBloquearCesion(ConexionADB &conexion, SQLHSTMT handler) {
     //   - Si la nueva potencia es menor que la antigua, interpretamos que está cediendo potencia.
     //   - Entonces comprobamos si los ingresos netos históricos eran negativos.
     //   - Si lo eran, se bloquea la operación mediante RAISE_APPLICATION_ERROR.
+
+    if(!conexion.isConnected()){
+        std::cerr << "ERROR DE CONEXIÓN\n";
+        return;
+    }
 
     const char* triggerSQL =
         "CREATE OR REPLACE TRIGGER trg_bloquear_cesion_en_perdidas "
@@ -1067,7 +1094,7 @@ void gestionRecursosEnergeticos(GestionRecursosEnergeticos& gre){
 }
 
 
-int main(int argc, char ** argv){
+int main(){
     std::string user, pwd, dsnTemp;
     int opcion;
 
