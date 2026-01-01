@@ -8,6 +8,8 @@
 #include <sqltypes.h>
 #include <string>
 #include <vector>
+// Para limpiar el buffer cuando use getline (porque yo uso strings y doubles/ints)
+#include <limits>
 #include "../include/ConexionADB.h"
 #include "../include/GestionTransmisionDistribucion.h"
 #include "../include/GestionEmpleados.h"
@@ -772,46 +774,108 @@ void crearTriggerVentas(ConexionADB &conexion, SQLHSTMT handler) {
 
 }
 
-// Pequeña función de lógica para confirmar/cancelar las opciones.
-bool confirmar(std::string seleccion){
-    char confirmacion = '\0';
-    bool romper = false;
-    std::cout << "Ha seleccionado: " << seleccion << ". ¿Continuar? (S/N): ";
-    do{
-        std::cin >> confirmacion;
-        if(tolower(confirmacion) != 'n')
-            romper = true;
-        else if(tolower(confirmacion) != 's' && tolower(confirmacion) != 'y')
-            std::cout << "Debe introducir un carácter válido.\n";
-    } while(tolower(confirmacion) != 'n' && tolower(confirmacion) != 's' && tolower(confirmacion) != 'y');
-    return romper;
+void crearTriggerBloquearCesion(ConexionADB &conexion, SQLHSTMT handler) {
+
+    // Creamos un trigger (disparador) que se ejecuta automáticamente cuando se modifica
+    // la potencia actual de una instalación energética.
+    //
+    // El objetivo es garantizar una restricción de negocio muy importante:
+    //
+    //  --> Una instalación que tenga ingresos netos negativos NO puede ceder potencia.
+    // De ser así es muy sencillo que entre en bancarrota.
+    // 
+    // Esto refleja un criterio empresarial lógico: si una instalación está en pérdidas,
+    // no debería transferir recursos a otra.
+    //
+    // BEFORE UPDATE OF Potencia_Actual -> se dispara antes de modificar esa columna.
+    // FOR EACH ROW -> actúa sobre cada fila afectada por el UPDATE.
+    //
+    // La lógica es:
+    //   - Si la nueva potencia es menor que la antigua, interpretamos que está cediendo potencia.
+    //   - Entonces comprobamos si los ingresos netos históricos eran negativos.
+    //   - Si lo eran, se bloquea la operación mediante RAISE_APPLICATION_ERROR.
+
+    const char* triggerSQL =
+        "CREATE OR REPLACE TRIGGER trg_bloquear_cesion_en_perdidas "
+        "BEFORE UPDATE OF Potencia_Actual ON Instalacion_Energetica "
+        "FOR EACH ROW "
+        "BEGIN "
+        "   IF :NEW.Potencia_Actual < :OLD.Potencia_Actual THEN "
+        "       IF :OLD.Ingresos_Netos_Historicos < 0 THEN "
+        "           RAISE_APPLICATION_ERROR( "
+        "               -20001, "
+        "               'ERROR: No se permite ceder potencia si la instalación tiene ingresos negativos.' "
+        "           ); "
+        "       END IF; "
+        "   END IF; "
+        "END;";
+
+    SQLRETURN retTrigger = SQLExecDirectA(handler, (SQLCHAR*)triggerSQL, SQL_NTS);
+
+    if (retTrigger != SQL_SUCCESS && retTrigger != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando trigger trg_bloquear_cesion_en_perdidas\n";
+    } else {
+        std::cout << "Trigger trg_bloquear_cesion_en_perdidas creado correctamente.\n";
+    }
 }
+
+
+
+// Pequeña función de lógica para confirmar/cancelar las opciones.
+bool confirmar(const std::string &seleccion){
+    char confirmacion = '\0';
+
+    std::cout << "Ha seleccionado: " << seleccion << ". ¿Continuar? (S/N): ";
+
+    // Limpiamos por si quedó basura
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    do{
+        std::cin.get(confirmacion);
+        confirmacion = std::tolower(confirmacion);
+
+        if(confirmacion != 's' && confirmacion != 'y' && confirmacion != 'n')
+            std::cout << "Debe introducir S/N: ";
+
+    } while(confirmacion != 's' && confirmacion != 'y' && confirmacion != 'n');
+
+    return (confirmacion == 's' || confirmacion == 'y');
+}
+
+
 
 // Interfaz para permitir al usuario seleccionar la funcionalidad pertinente de la gestión de recursos energéticos.
 // Se controla con un do-while, que contiene un switch-case sencillo. 
 // Se pasa la instancia de GestionRecursosEnergeticos como referencia para preservar la conexión 
 // referenciada en dicha clase.
 void gestionRecursosEnergeticos(GestionRecursosEnergeticos& gre){
+
     int seleccion = -1;
-    // Para confirmar
-    char confirmacion;
-    // Para volver a seleccionar opción por si se ha equivocado
-    bool romper = false;
-    // Variables caso 1:
-    std::string nombre211, descripcion211, direccion211, fecha211, ingresosTemp211, ingresos211 = "0.0", potenciaTemp211, potencia211 = "0.0";
-    // Variables caso 2:
-    std::string nombre212, direccion212;
-    // Variables caso 3:
-    std::string nombre22; double ingresos22 = -600.0;
-    // Variables caso 4:
-    std::string tipoEnergia23; std::vector<std::string> instalaciones23;
-    // Variables caso 5:
-    std::string tipoEnergia24; double ingresos24 = -600.0;
-    // Variables caso 6:
-    std::string nombreC24, direccionC24, nombreR24, direccionR24; int potencia24;
+
+    // Variables generales reutilizables en el subsistema.
+    std::string nombre;           
+    std::string descripcion;      
+    std::string direccion;        
+    std::string fecha;            
+    std::string ingresosTemp;     
+    std::string ingresosStr = "0.0";
+    std::string potenciaTemp;
+    std::string potenciaStr = "50.0";
+
+    // Para RF-2.5
+    std::string dirCed;
+    std::string dirRec;
+    std::string tipoCed;
+    std::string tipoRec;
+
+    double ingresos = 0.0;
+    double cantidad = 0.0;
+    int porcentaje = 0;
+
+    std::vector<std::string> instalaciones;
+
     do{
-        std::cout << "===== SUBSISTEMA DE GESTIÓN DE RECURSOS ENERGÉTICOS =====\n";
-        std::cout << "Por favor, elija una opción de las siguientes:\n";
+        std::cout << "\n===== SUBSISTEMA DE GESTIÓN DE RECURSOS ENERGÉTICOS =====\n";
         std::cout << "0. Finalizar interacción con subsistema.\n";
         std::cout << "1. Dar de alta una nueva fuente energética.\n";
         std::cout << "2. Dar de baja una fuente energética existente.\n";
@@ -820,110 +884,180 @@ void gestionRecursosEnergeticos(GestionRecursosEnergeticos& gre){
         std::cout << "5. Consultar ingresos por tipo de energía.\n";
         std::cout << "6. Ceder potencia de una instalación a otra.\n";
         std::cout << "7. Añadir ingresos al histórico de una instalación.\n";
+        std::cout << "Seleccione opción: ";
+
         std::cin >> seleccion;
+
+        // limpiamos salto de línea ANTES de getline()
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
         switch(seleccion){
+
             case 0:
                 break;
+
             case 1:
                 if(!confirmar("Dar de alta una nueva fuente energética"))
                     break;
-                std::cout << "Introduzca los datos que le serán pedidos sobre la instalación a registrar.\n";
-                std::cout << "Para aceptar valores por defecto, dejar entrada estándar vacía.\n";
+
+                std::cout << "Introduzca los datos:\n";
+
                 std::cout << "Nombre: ";
-                std::cin >> nombre211;
-                std::cout << "Descripción: ";
-                std::cin >> descripcion211;
+                std::getline(std::cin, nombre);
+
+                std::cout << "Descripción (tipo de energía): ";
+                std::getline(std::cin, descripcion);
+
                 std::cout << "Dirección: ";
-                std::cin >> direccion211;
-                std::cout << "Fecha (formato YYYY-MM-DD): ";
-                std::cin >> fecha211;
-                std::cout << "Ingresos (por defecto, 0.0€): ";
-                std::cin >> ingresosTemp211;
-                std::cout << "Potencia inicial (por defecto, 50.0%): ";
-                std::cin >> potenciaTemp211;
-                if(!ingresosTemp211.empty()) ingresos211 = ingresosTemp211;
-                if(!potenciaTemp211.empty()) potencia211 = potenciaTemp211;
-                if(!gre.altaFuenteEnergetica(nombre211, descripcion211, direccion211, fecha211, ingresos211, potencia211))
+                std::getline(std::cin, direccion);
+
+                std::cout << "Fecha (YYYY-MM-DD): ";
+                std::getline(std::cin, fecha);
+
+                std::cout << "Ingresos (por defecto 0.0): ";
+                std::getline(std::cin, ingresosTemp);
+
+                std::cout << "Potencia inicial (por defecto 50.0): ";
+                std::getline(std::cin, potenciaTemp);
+
+                if(!ingresosTemp.empty()) ingresosStr = ingresosTemp;
+                if(!potenciaTemp.empty()) potenciaStr = potenciaTemp;
+
+                if(!gre.altaFuenteEnergetica(nombre, descripcion, direccion, fecha,
+                                             ingresosStr, potenciaStr))
                     std::cout << "Algo ha ido mal. No se han guardado cambios.\n";
+
                 break;
+
+
             case 2:
                 if(!confirmar("Dar de baja una fuente energética existente"))
                     break;
-                std::cout << "Introduzca los datos que le serán pedidos sobre la instalación a borrar.\n";
+
                 std::cout << "Nombre: ";
-                std::cin >> nombre212;
+                std::getline(std::cin, nombre);
+
                 std::cout << "Dirección: ";
-                std::cin >> direccion212;
-                if(!gre.bajaFuenteEnergetica(nombre212, direccion212))
+                std::getline(std::cin, direccion);
+
+                if(!gre.bajaFuenteEnergetica(nombre, direccion))
                     std::cout << "Algo ha salido mal. No se han guardado cambios.\n";
+
                 break;
+
+
             case 3:
                 if(!confirmar("Consultar ingresos por instalación"))
                     break;
-                std::cout << "Introduzca los datos que le serán pedidos sobre la instalación.\n";
-                std::cout << "Nombre: ";
-                std::cin >> nombre22;
-                // Aquí no decimos nada de guardar cambios porque es un query; no hay cambios.
-                if(!gre.consultarIngresosPorInstalacion(nombre22, ingresos22))
+
+                std::cout << "Dirección de la instalación: ";
+                std::getline(std::cin, direccion);
+
+                ingresos = -600.0;
+
+                if(!gre.consultarIngresosPorInstalacion(direccion, ingresos))
                     std::cout << "Algo ha salido mal.\n";
                 else
-                    std::cout << "Ingresos históricos de la instalación con nombre " << nombre22 << ": " << ingresos22 << ".\n";
+                    std::cout << "Ingresos históricos en \"" 
+                              << direccion << "\": " << ingresos << "€.\n";
+
                 break;
+
+
             case 4:
                 if(!confirmar("Consultar instalaciones por tipo de energía"))
                     break;
-                std::cout << "Introduzca los datos que le serán pedidos sobre el tipo de energía.\n";
-                std::cout << "Descripción del tipo de energía: ";
-                std::cin >> tipoEnergia23;
-                if(!gre.consultarInstalacionesPorEnergia(tipoEnergia23, instalaciones23))
-                    std::cout << "Algo ha salido mal.";
+
+                std::cout << "Tipo de energía: ";
+                std::getline(std::cin, descripcion);
+
+                instalaciones.clear();
+
+                if(!gre.consultarInstalacionesPorEnergia(descripcion, instalaciones))
+                    std::cout << "Algo ha salido mal.\n";
+                else if(instalaciones.empty())
+                    std::cout << "No se han encontrado instalaciones del tipo \"" 
+                              << descripcion << "\".\n";
                 else{
-                    if(!instalaciones23.empty()){
-                        std::cout << "Instalaciones con tipo de energía \"" << tipoEnergia23 << "\":\n";
-                        for(auto it = instalaciones23.begin(); it != instalaciones23.end(); it++)
-                            std::cout << *it << '\n';
-                    } else std::cout << "No se han encontrado instalaciones con tipo de energía \"" << tipoEnergia23 << "\".\n";
+                    std::cout << "Instalaciones encontradas:\n";
+                    for(const auto &d : instalaciones)
+                        std::cout << " - " << d << '\n';
                 }
+
                 break;
+
+
             case 5:
                 if(!confirmar("Consultar ingresos por tipo de energía"))
                     break;
-                std::cout << "Introduzca los datos que le serán pedidos sobre el tipo de energía.\n";
-                std::cout << "Descripción del tipo de energía: ";
-                std::cin >> tipoEnergia24;
-                if(!gre.consultarIngresosPorTipoEnergia(tipoEnergia24, ingresos24))
+
+                std::cout << "Tipo de energía: ";
+                std::getline(std::cin, descripcion);
+
+                ingresos = -600.0;
+
+                if(!gre.consultarIngresosPorTipoEnergia(descripcion, ingresos))
                     std::cout << "Algo ha salido mal.\n";
                 else
-                    std::cout << "Ingresos históricos del tipo de energía \"" << tipoEnergia24 << "\": " << ingresos24 << ".\n";
+                    std::cout << "Ingresos históricos del tipo \"" 
+                              << descripcion << "\": " << ingresos << "€.\n";
+
                 break;
+
+
             case 6:
                 if(!confirmar("Ceder potencia de una instalación a otra"))
                     break;
-                std::cout << "Introduzca los datos que le serán pedidos sobre las instalaciones cedente y receptora.\n";
-                std::cout << "Nombre de la instalación cedente: ";
-                std::cin >> nombreC24;
-                std::cout << "Dirección de la instalación cedente: ";
-                std::cin >> direccionC24;
-                std::cout << "Nombre de la instalación receptora: ";
-                std::cin >> nombreR24;
-                std::cout << "Dirección de la instalación receptora: ";
-                std::cin >> direccionR24;
-                std::cout << "Potencia a ceder: ";
-                std::cin >> potencia24;
-                if(!gre.cederPotencia(nombreC24, direccionC24, nombreR24, direccionR24, potencia24))
+
+                std::cout << "Dirección instalación cedente: ";
+                std::getline(std::cin, dirCed);
+
+                std::cout << "Tipo energía instalación cedente: ";
+                std::getline(std::cin, tipoCed);
+
+                std::cout << "Dirección instalación receptora: ";
+                std::getline(std::cin, dirRec);
+
+                std::cout << "Tipo energía instalación receptora: ";
+                std::getline(std::cin, tipoRec);
+
+                std::cout << "Potencia a ceder (%): ";
+                std::cin >> porcentaje;
+
+                if(!gre.cederPotencia(dirCed, tipoCed, dirRec, tipoRec, porcentaje))
                     std::cout << "Algo ha salido mal. No se han guardado cambios.\n";
+
                 break;
+
+
             case 7:
                 if(!confirmar("Añadir ingresos al histórico de una instalación"))
                     break;
+
+                std::cout << "Dirección instalación: ";
+                std::getline(std::cin, direccion);
+
+                std::cout << "Tipo de energía: ";
+                std::getline(std::cin, descripcion);
+
+                std::cout << "Ingresos a añadir: ";
+                std::cin >> cantidad;
+
+                if(!gre.anadirIngreso(direccion, descripcion, cantidad))
+                    std::cout << "Algo ha salido mal. No se han guardado cambios.\n";
+
                 break;
+
+
             default:
-                std::cout << "Opción no válida. Inténtelo de nuevo.\n";
+                std::cout << "Opción no válida.\n";
         }
+
     } while(seleccion != 0);
+
     std::cout << "Tenga un buen día.\nFinalizando interacción con subsistema...\n\n";
-    return;
 }
+
 
 int main(int argc, char ** argv){
     std::string user, pwd;
@@ -953,6 +1087,7 @@ int main(int argc, char ** argv){
 
     GestionTransmisionDistribucion hogares(conexion);
     GestionEmpleados empleados(conexion);
+    GestionRecursosEnergeticos rec_ener(conexion);
 
     // Borramos todas las tablas de la sesion anterior
     borrarTablas(conexion, handler);
@@ -1022,7 +1157,7 @@ int main(int argc, char ** argv){
 
         switch (opcion) {
             case 1: gestionTransmisionDistribucion(hogares); break;
-            case 2: 
+            case 2: gestionRecursosEnergeticos(rec_ener); break;
 
             case 3: gestionEmpleados(empleados); break;
 
@@ -1031,7 +1166,7 @@ int main(int argc, char ** argv){
             case 5: mostrarContenidoTablas(conexion, handler); break;
 
             case 6: std::cout << "Saliendo...\n"; break;
-            default: std::cout << "Opcion no valida.\n"; break;
+            default: std::cout << "Opcion no válida.\n"; break;
         }
     } while (opcion != 6);
 
