@@ -33,6 +33,7 @@ int main(){
     GestionTransmisionDistribucion hogares(conexion);
     GestionEmpleados empleados(conexion);
     GestionRecursosEnergeticos rec_ener(conexion);
+    GestionClientes clientes(conexion);
 
     // Borramos todas las tablas de la sesion anterior
     borrarTablas(conexion, handler);
@@ -42,10 +43,12 @@ int main(){
 
     // Creamos el trigger para actualizar el tipo de contrato en Hogar al modificarlo en Contrato
     crearTriggerActualizarDatosHogar(conexion, handler);
-    //Creamos el trigger para calcular incentivos al actualizar las ventas de un empleado
+    // Creamos el trigger para calcular incentivos al actualizar las ventas de un empleado
     crearTriggerVentas(conexion, handler);
-    //Creamos el trigger para bloquear cesión de potencia si el cedente está en números rojos.
+    // Creamos el trigger para bloquear cesión de potencia si el cedente está en números rojos.
     crearTriggerBloquearCesion(conexion, handler);
+    // Creamos trigger para finalizar contratos al dar de baja un cliente
+    crearTriggerContratosBaja(conexion, handler);
 
     // Inserto DNI en cliente e ID contrato en Contrato para poder dar de alta hogares
     int id_contrato = 1;
@@ -100,11 +103,12 @@ int main(){
 
         switch (opcion) {
             case 1: gestionTransmisionDistribucion(hogares); break;
+            
             case 2: gestionRecursosEnergeticos(rec_ener); break;
 
             case 3: gestionEmpleados(empleados); break;
 
-            case 4:
+            case 4: gestionClientes(clientes); break;
 
             case 5: mostrarContenidoTablas(conexion, handler); break;
 

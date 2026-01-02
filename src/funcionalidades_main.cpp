@@ -1190,11 +1190,11 @@ void gestionClientes(GestionClientes &clientes) {
                 std::cout << "Introduzca el tipo de contrato (Doméstico/Empresarial/Industrial): ";
                 std::getline(std::cin, tipo_contrato);
                 
-                std::cout << "Introduzca la potencia contratada (kW, debe ser > 3): ";
+                std::cout << "Introduzca la potencia contratada en kW (debe ser mayor que 3): ";
                 std::cin >> potencia_con;
                 std::cin.ignore();
                 
-                std::cout << "Introduzca la tarifa del contrato: "; // Aquí se podrían mostrar las tarifas disponibles haciendo un SELECT desde la tabla Tarifas
+                std::cout << "Introduzca la tarifa del contrato (Fija/Variable/Nocturna): "; 
                 std::getline(std::cin, tarifa);
                 
                 std::cout << "Introduzca el IBAN para domiciliación: ";
@@ -1247,9 +1247,9 @@ void gestionClientes(GestionClientes &clientes) {
                 std::getline(std::cin, motivo_baja);
 
                 if (clientes.bajaCliente(dni_cif, fecha_baja, motivo_baja)) {
-                    std::cout << "\n✓ Cliente dado de baja correctamente.\n";
+                    std::cout << "\nCliente dado de baja correctamente.\n";
                 } else {
-                    std::cout << "\n✗ Error al dar de baja el cliente.\n";
+                    std::cout << "\nError al dar de baja el cliente.\n";
                 }
                 break;
             }
@@ -1264,6 +1264,49 @@ void gestionClientes(GestionClientes &clientes) {
         }
     } while (opcion != 7);
 }
+
+void crearTriggerContratosBaja(ConexionADB& conexion, SQLHSTMT handler) {
+    // Este trigger finaliza automáticamente TODOS los contratos activos cuando se da de baja a un cliente
+    // Creamos un trigger (disparador) en la base de datos y si el trigger ya existiera, se reemplaza
+    // en caso de que se ejecutase varias veces para evitar errores.
+    // Con BEFORE UPDATE le indicamos al trigger que se debe ejecutar antes de actualizar la tabla Cliente.
+    // El trigger se ejecutará para cada fila que se actualice, no una vez por la sentencia completa.
+    // Con WHEN (...) indicamos la condición para que se ejecute el trigger, en este caso cuando
+    // el Estado del cliente cambie a 'Baja'.
+    // Todo el bloque que está entre BEGIN y END es lo que se ejecuta cuando el trigger se dispara, en este
+    // caso que se actualice la tabla Cliente con el nuevo Estado a 'Baja'.
+    // El trigger actualizará todos los contratos activos del cliente a 'Finalizado' y pondrá la
+    // Fecha_Fin al día actual (SYSDATE).
+
+    if (!conexion.isConnected()) {
+        std::cerr << "ERROR: Conexión no establecida\n";
+        return;
+    }
+    
+    const char* crearTriggerCascada = R"(
+        CREATE OR REPLACE TRIGGER TRG_FINALIZAR_CONTRATOS_BAJA
+        BEFORE UPDATE ON Cliente
+        FOR EACH ROW
+        WHEN (NEW.Estado = 'Baja' AND OLD.Estado != 'Baja')
+        BEGIN
+            -- Actualizar todos los contratos activos a 'Finalizado'
+            UPDATE Contrato
+            SET Estado = 'Finalizado',
+                Fecha_Fin = SYSDATE
+            WHERE DNI_CIF = :NEW.DNI_CIF
+            AND Estado = 'Activo';
+        END
+    )";
+    
+    SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)crearTriggerCascada, SQL_NTS);
+    
+    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error creando trigger TRG_FINALIZAR_CONTRATOS_BAJA\n";
+    } else {
+        std::cout << "Trigger TRG_FINALIZAR_CONTRATOS_BAJA creado correctamente.\n";
+    }
+}
+
 
 void insertarInstalaciones(ConexionADB &conexion, SQLHSTMT handler)
 {

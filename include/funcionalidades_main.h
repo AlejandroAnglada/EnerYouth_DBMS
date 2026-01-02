@@ -75,7 +75,7 @@ void insertarInstalaciones(ConexionADB& db, SQLHSTMT handler);
 // Submenú clientes
 void gestionClientes(GestionClientes &clientes);
 
-// Crear trigger (tú decides Ismael)
-void crearTrigger(ConexionADB& conexion, SQLHSTMT handler);
+// Crear trigger finalización contratos al dar de baja un cliente
+void crearTriggerContratosBaja(ConexionADB& conexion, SQLHSTMT handler);
 
 #endif // FUNCIONALIDADES_MAIN_H
