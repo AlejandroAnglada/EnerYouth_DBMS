@@ -23,12 +23,13 @@ int main(){
         std::cerr << "Error al conectar con la BD\n";
         return 1;
     }
-    
+
+    // Handler y conexión
     SQLHDBC con = conexion.getConnection();
     handler = SQL_NULL_HSTMT;
-
     SQLAllocHandle(SQL_HANDLE_STMT, con, &handler);
 
+    // Creamos instancias de cada subsistema
     GestionTransmisionDistribucion hogares(conexion);
     GestionEmpleados empleados(conexion);
     GestionRecursosEnergeticos rec_ener(conexion);
@@ -41,20 +42,10 @@ int main(){
 
     // Creamos el trigger para actualizar el tipo de contrato en Hogar al modificarlo en Contrato
     crearTriggerActualizarDatosHogar(conexion, handler);
-
-    SQLHSTMT handler_ventas;
-    handler_ventas = SQL_NULL_HSTMT;
-    SQLAllocHandle(SQL_HANDLE_STMT, con, &handler_ventas);
     //Creamos el trigger para calcular incentivos al actualizar las ventas de un empleado
-    crearTriggerVentas(conexion, handler_ventas);
-    SQLFreeHandle(SQL_HANDLE_STMT, handler_ventas);
-
-    SQLHSTMT handler_bloq_ces;
-    SQLAllocHandle(SQL_HANDLE_STMT, con, &handler_bloq_ces);
+    crearTriggerVentas(conexion, handler);
     //Creamos el trigger para bloquear cesión de potencia si el cedente está en números rojos.
-    crearTriggerBloquearCesion(conexion, handler_bloq_ces);
-    SQLFreeHandle(SQL_HANDLE_STMT, handler_bloq_ces);
-
+    crearTriggerBloquearCesion(conexion, handler);
 
     // Inserto DNI en cliente e ID contrato en Contrato para poder dar de alta hogares
     int id_contrato = 1;
@@ -86,8 +77,10 @@ int main(){
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "Error insertando Cliente\n";
     }
-    SQLFreeStmt(handler, SQL_CLOSE);
+    // Insertamos instalaciones de prueba
+    insertarInstalaciones(conexion, handler);
 
+    SQLFreeStmt(handler, SQL_CLOSE);
     SQLEndTran(SQL_HANDLE_DBC, conexion.getConnection(), SQL_COMMIT);
     
     // Mostramos las tablas (prueba)

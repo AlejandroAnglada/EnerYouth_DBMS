@@ -1264,3 +1264,71 @@ void gestionClientes(GestionClientes &clientes) {
         }
     } while (opcion != 7);
 }
+
+void insertarInstalaciones(ConexionADB &conexion, SQLHSTMT handler)
+{
+    if(!conexion.isConnected()){
+        std::cerr << "ERROR: Conexión no establecida\n";
+        return;
+    }
+
+    std::cout << "\nInsertando instalaciones de ejemplo...\n";
+
+    struct Instalacion {
+        std::string nombre;
+        std::string direccion;
+        std::string descripcion;
+        std::string ingresos;
+        std::string fecha;
+        std::string potencia;
+    };
+
+    std::vector<Instalacion> datos = {
+
+        // ====== EÓLICA ======
+        { "Eolica", "Calle Viento 1", "Parque eolico grande",
+          "120000", "2010-05-10", "80" },
+
+        { "Eolica", "Calle Viento 2", "Parque eolico pequeño",
+          "90000", "2012-06-14", "20" },
+
+        // ====== SOLAR ======
+        { "Solar", "Av. Solar 10", "Planta solar sur",
+          "50000", "2015-03-03", "90" },
+
+        // Esta sirve para activar el TRIGGER
+        { "Solar", "Av. Solar 20", "Planta solar deficit",
+          "-30000", "2018-08-20", "40" },
+
+        // ====== HIDRÁULICA ======
+        { "Hidrica", "Ctra. Hidro 5", "Central hidraulica 1",
+          "20000", "2005-10-01", "60" },
+
+        { "Hidrica", "Ctra. Hidro 8", "Central hidraulica 2",
+          "10000", "2011-11-11", "10" }
+    };
+
+    for(const auto &i : datos){
+
+        std::string sql =
+            "INSERT INTO Instalacion_Energetica "
+            "(Nombre_Fuente_Energetica, Direccion_Instalaciones, Descripcion, "
+            "Ingresos_Netos_Historicos, Fecha_Fundacion, Potencia_Actual) "
+            "VALUES ('" + i.nombre + "', '" + i.direccion + "', '" + i.descripcion +
+            "', " + i.ingresos + ", TO_DATE('" + i.fecha + "', 'YYYY-MM-DD'), " +
+            i.potencia + ")";
+
+        SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)sql.c_str(), SQL_NTS);
+
+        if(ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO)
+            std::cout << "Insertada instalación en: " << i.direccion << "\n";
+        else
+            std::cerr << "ERROR insertando en: " << i.direccion << "\n";
+
+        SQLFreeStmt(handler, SQL_CLOSE);
+    }
+
+    SQLEndTran(SQL_HANDLE_DBC, conexion.getConnection(), SQL_COMMIT);
+
+    std::cout << "\nInstalaciones insertadas correctamente.\n";
+}

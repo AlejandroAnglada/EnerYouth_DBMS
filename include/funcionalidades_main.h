@@ -65,6 +65,9 @@ bool confirmar(const std::string &seleccion);
 // Submenú recursos energéticos
 void gestionRecursosEnergeticos(GestionRecursosEnergeticos& gre);
 
+// Inserción de 6 instalaciones de ejemplo
+void insertarInstalaciones(ConexionADB& db, SQLHSTMT handler);
+
 // ========================
 // === GESTION CLIENTES ===
 // ========================
