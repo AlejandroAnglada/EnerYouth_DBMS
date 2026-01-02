@@ -1075,3 +1075,192 @@ void gestionRecursosEnergeticos(GestionRecursosEnergeticos& gre){
 
     std::cout << "Tenga un buen día.\nFinalizando interacción con subsistema...\n\n";
 }
+
+void gestionClientes(GestionClientes &clientes) {
+    int opcion;
+    ClienteInfo info;
+
+    do {
+        std::cout << "\n\nGestion de Clientes seleccionada.\n";
+        std::cout << "--Bienvenido al subsistema de gestion de clientes---\n";
+        std::cout << "Aqui podra dar de alta y de baja a clientes, consultar sus datos, actualizar su información y crear yfinalizar contratos.\n";
+        std::cout << "\n===== MENU GESTION DE CLIENTES =====\n";
+        std::cout << "1. Dar de alta cliente\n";
+        std::cout << "2. Consultar cliente\n";
+        std::cout << "3. Actualizar cliente\n";
+        std::cout << "4. Crear contrato\n";
+        std::cout << "5. Finalizar contrato\n";
+        std::cout << "6. Dar de baja cliente\n";
+        std::cout << "7. Volver al menu principal\n";
+        std::cout << "Seleccione una opcion: ";
+        std::cin >> opcion;
+
+        switch(opcion) {
+            case 1: {
+                // ALTA CLIENTE 
+                std::string dni_cif, nombre, apellidos, direccion, telefono, email;
+                std::cin.ignore();
+                
+                std::cout << "\n------ FORMULARIO DE ALTA DE CLIENTE ------\n";
+                std::cout << "Introduzca el DNI/CIF del cliente: ";
+                std::getline(std::cin, dni_cif);
+                
+                std::cout << "Introduzca el nombre del cliente: ";
+                std::getline(std::cin, nombre);
+                
+                std::cout << "Introduzca los apellidos del cliente: ";
+                std::getline(std::cin, apellidos);
+                
+                std::cout << "Introduzca la dirección del cliente: ";
+                std::getline(std::cin, direccion);
+                
+                std::cout << "Introduzca el teléfono del cliente (9 dígitos): ";
+                std::getline(std::cin, telefono);
+                
+                std::cout << "Introduzca el email del cliente: ";
+                std::getline(std::cin, email);
+
+                if (clientes.altaCliente(dni_cif, nombre, apellidos, direccion, telefono, email)) {
+                    std::cout << "\n✓ Cliente dado de alta correctamente.\n";
+                } else {
+                    std::cout << "\n✗ Error al dar de alta el cliente.\n";
+                }
+                break;
+            }
+
+            case 2: {
+                // CONSULTAR CLIENTE 
+                std::string dni_cif;
+                std::cin.ignore();
+                
+                std::cout << "\n------ CONSULTA DE CLIENTE ------\n";
+                std::cout << "Introduzca el DNI/CIF del cliente a consultar: ";
+                std::getline(std::cin, dni_cif);
+
+                if (clientes.consultarCliente(dni_cif, info)) {
+                    std::cout << "\n✓ Consulta realizada correctamente.\n";
+                } else {
+                    std::cout << "\n✗ Error al consultar el cliente.\n";
+                }
+                break;
+            }
+
+            case 3: {
+                // ACTUALIZAR CLIENTE
+                std::string dni_cif, campo, valor_nuevo;
+                std::cin.ignore();
+                
+                std::cout << "\n------ ACTUALIZACIÓN DE CLIENTE ------\n";
+                std::cout << "Introduzca el DNI/CIF del cliente a actualizar: ";
+                std::getline(std::cin, dni_cif);
+                
+                std::cout << "\nCampos disponibles para modificar:\n";
+                std::cout << "  - nombre\n";
+                std::cout << "  - apellidos\n";
+                std::cout << "  - direccion\n";
+                std::cout << "  - telefono\n";
+                std::cout << "  - email\n";
+                std::cout << "Introduzca el campo a modificar: ";
+                std::getline(std::cin, campo);
+                
+                std::cout << "Introduzca el nuevo valor: ";
+                std::getline(std::cin, valor_nuevo);
+
+                if (clientes.actualizarCliente(dni_cif, campo, valor_nuevo)) {
+                    std::cout << "\n✓ Cliente actualizado correctamente.\n";
+                } else {
+                    std::cout << "\n✗ Error al actualizar el cliente.\n";
+                }
+                break;
+            }
+
+            case 4: {
+                // CREAR CONTRATO 
+                std::string dni_cif, cups, tipo_contrato, tarifa, iban, fecha_inicio, fecha_fin;
+                double potencia_con;
+                std::cin.ignore();
+                
+                std::cout << "\n------ FORMULARIO DE CREACIÓN DE CONTRATO ------\n";
+                std::cout << "Introduzca el DNI/CIF del cliente: ";
+                std::getline(std::cin, dni_cif);
+                
+                std::cout << "Introduzca el CUPS para el contrato: ";
+                std::getline(std::cin, cups);
+                
+                std::cout << "Introduzca el tipo de contrato (Doméstico/Empresarial/Industrial): ";
+                std::getline(std::cin, tipo_contrato);
+                
+                std::cout << "Introduzca la potencia contratada (kW, debe ser > 3): ";
+                std::cin >> potencia_con;
+                std::cin.ignore();
+                
+                std::cout << "Introduzca la tarifa del contrato: "; // Aquí se podrían mostrar las tarifas disponibles haciendo un SELECT desde la tabla Tarifas
+                std::getline(std::cin, tarifa);
+                
+                std::cout << "Introduzca el IBAN para domiciliación: ";
+                std::getline(std::cin, iban);
+                
+                std::cout << "Introduzca la fecha de inicio (YYYY-MM-DD): ";
+                std::getline(std::cin, fecha_inicio);
+                
+                std::cout << "Introduzca la fecha de fin (YYYY-MM-DD) [opcional]: ";
+                std::getline(std::cin, fecha_fin);
+
+                if (clientes.crearContrato(dni_cif, cups, tipo_contrato, potencia_con, tarifa, iban, fecha_inicio, fecha_fin)) {
+                    std::cout << "\n✓ Contrato creado correctamente.\n";
+                } else {
+                    std::cout << "\n✗ Error al crear el contrato.\n";
+                }
+                break;
+            }
+
+            case 5: {
+                // FINALIZAR CONTRATO 
+                int id_contrato;
+                std::cin.ignore();
+                
+                std::cout << "\n------ FINALIZACIÓN DE CONTRATO ------\n";
+                std::cout << "Introduzca el ID del contrato a finalizar: ";
+                std::cin >> id_contrato;
+
+                if (clientes.finalizarContrato(id_contrato)) {
+                    std::cout << "\n✓ Contrato finalizado correctamente.\n";
+                } else {
+                    std::cout << "\n✗ Error al finalizar el contrato.\n";
+                }
+                break;
+            }
+
+            case 6: {
+                // BAJA CLIENTE
+                std::string dni_cif, fecha_baja, motivo_baja;
+                std::cin.ignore();
+                
+                std::cout << "\n------ BAJA DE CLIENTE ------\n";
+                std::cout << "Introduzca el DNI/CIF del cliente a dar de baja: ";
+                std::getline(std::cin, dni_cif);
+                
+                std::cout << "Introduzca la fecha de baja (YYYY-MM-DD): ";
+                std::getline(std::cin, fecha_baja);
+                
+                std::cout << "Introduzca el motivo de la baja: ";
+                std::getline(std::cin, motivo_baja);
+
+                if (clientes.bajaCliente(dni_cif, fecha_baja, motivo_baja)) {
+                    std::cout << "\n✓ Cliente dado de baja correctamente.\n";
+                } else {
+                    std::cout << "\n✗ Error al dar de baja el cliente.\n";
+                }
+                break;
+            }
+
+            case 7:
+                std::cout << "Volviendo al menu principal...\n";
+                break;
+                
+            default:
+                std::cout << "Opcion no valida. Intente de nuevo.\n";
+                break;
+        }
+    } while (opcion != 7);
+}
