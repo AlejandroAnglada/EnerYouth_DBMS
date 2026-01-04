@@ -82,7 +82,7 @@ int main(){
     char fecha_fin[11] = "2024-10-01";
     char estado_contrato[10] = "Activo";
     char contrato[2048];
-    sprintf(contrato, "INSERT INTO Contrato (ID_Contrato, CUPS, Tipo_Contrato, Potencia_Con, Tarifa, IBAN, DNI_CIF) VALUES (%d, '%s', '%s', %f, '%s', '%s', '%s');", id_contrato, cups, tipo_contrato, potencia_con, tarifa, iban, dni_cif);
+    sprintf(contrato, "INSERT INTO Contrato (ID_Contrato, CUPS, Tipo_Contrato, Potencia_Con, Tarifa, IBAN, Fecha_Inicio, Fecha_Fin, DNI_CIF) VALUES (%d, '%s', '%s', %f, '%s', '%s', TO_DATE('%s', 'YYYY-MM-DD'), TO_DATE('%s', 'YYYY-MM-DD'), '%s');", id_contrato, cups, tipo_contrato, potencia_con, tarifa, iban, fecha_inicio, fecha_fin, dni_cif);
     SQLRETURN retContrato = SQLExecDirectA(handler, (SQLCHAR*) contrato, SQL_NTS);
     if (retContrato != SQL_SUCCESS && retContrato != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "Error insertando Contrato\n";
