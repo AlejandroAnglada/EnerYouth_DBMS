@@ -184,13 +184,13 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 7, SQL_C_CHAR, Estado_Incidencia, sizeof(Estado_Incidencia), NULL);
         SQLGetData(handler, 5, SQL_C_CHAR, Fecha_Incidencia, sizeof(Fecha_Incidencia), NULL);
         SQLGetData(handler, 6, SQL_C_CHAR, Fecha_Resolucion, sizeof(Fecha_Resolucion), NULL);
-        std::cout << "ID_Incidencia:" << ID_Incidencia << "\n";
-        std::cout << "ID_Contrato_I:" << ID_Contrato_I << "\n";
-        std::cout << "Descripcion_Incidencia:" << Descripcion_Incidencia << "\n";
-        std::cout << "Tipo_Incidencia:" << Tipo_Incidencia << "\n";
-        std::cout << "Estado_Incidencia:" << Estado_Incidencia << "\n";
-        std::cout << "Fecha_Incidencia:" << Fecha_Incidencia << "\n";
-        std::cout << "Fecha_Resolucion:" << Fecha_Resolucion << "\n\n";
+        std::cout << "ID_Incidencia:          " << ID_Incidencia << "\n";
+        std::cout << "ID_Contrato_I:          " << ID_Contrato_I << "\n";
+        std::cout << "Descripcion_Incidencia: " << Descripcion_Incidencia << "\n";
+        std::cout << "Tipo_Incidencia:        " << Tipo_Incidencia << "\n";
+        std::cout << "Estado_Incidencia:      " << Estado_Incidencia << "\n";
+        std::cout << "Fecha_Incidencia:       " << Fecha_Incidencia << "\n";
+        std::cout << "Fecha_Resolucion:       " << Fecha_Resolucion << "\n\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -205,11 +205,11 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 3, SQL_C_LONG, &ID_Contrato_H, 0, NULL);
         SQLGetData(handler, 4, SQL_C_CHAR, Tipo_Contrato, sizeof(Tipo_Contrato), NULL);
         SQLGetData(handler, 5, SQL_C_CHAR, Zona_Geografica, sizeof(Zona_Geografica), NULL);
-        std::cout << "Direccion:"  << Direccion << "\n";
-        std::cout << "DNI_Cliente:"  << DNI_Cliente << "\n";
-        std::cout << "ID_Contrato_H:"  << ID_Contrato_H << "\n";
-        std::cout << "Tipo_Contrato:"  << Tipo_Contrato << "\n";
-        std::cout << "Zona_Geografica:"  << Zona_Geografica << "\n";
+        std::cout << "Direccion:       "  << Direccion << "\n";
+        std::cout << "DNI_Cliente:     "  << DNI_Cliente << "\n";
+        std::cout << "ID_Contrato_H:   "  << ID_Contrato_H << "\n";
+        std::cout << "Tipo_Contrato:   "  << Tipo_Contrato << "\n";
+        std::cout << "Zona_Geografica: "  << Zona_Geografica << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -227,12 +227,12 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 4, SQL_C_DOUBLE, &Ingresos_Netos_Historicos, 0, NULL);
         SQLGetData(handler, 5, SQL_C_CHAR, Fecha_Fundacion, sizeof(Fecha_Fundacion), NULL);
         SQLGetData(handler, 6, SQL_C_LONG, &Potencia_Actual, 0, NULL);
-        std::cout << "Nombre_Fuente_Energetica:" << Nombre_Fuente_Energetica << "\n";
-        std::cout << "Direccion_Instalaciones:" << Direccion_Instalaciones << "\n";
-        std::cout << "Descripcion:" << Descripcion << "\n";
-        std::cout << "Ingresos_Netos_Historicos:" << Ingresos_Netos_Historicos << "\n";
-        std::cout << "Fecha_Fundacion:" << Fecha_Fundacion << "\n";
-        std::cout << "Potencia_Actual:" << Potencia_Actual << "\n";
+        std::cout << "Nombre_Fuente_Energetica:  " << Nombre_Fuente_Energetica << "\n";
+        std::cout << "Direccion_Instalaciones:   " << Direccion_Instalaciones << "\n";
+        std::cout << "Descripcion:               " << Descripcion << "\n";
+        std::cout << "Ingresos_Netos_Historicos: " << Ingresos_Netos_Historicos << "\n";
+        std::cout << "Fecha_Fundacion:           " << Fecha_Fundacion << "\n";
+        std::cout << "Potencia_Actual:           " << Potencia_Actual << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -246,10 +246,10 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 2, SQL_C_CHAR, Direccion_Instalaciones_C, sizeof(Direccion_Instalaciones_C), NULL);
         SQLGetData(handler, 3, SQL_C_CHAR, Nombre_Fuente_Energetica_R, sizeof(Nombre_Fuente_Energetica_R), NULL);
         SQLGetData(handler, 4, SQL_C_CHAR, Direccion_Instalaciones_R, sizeof(Direccion_Instalaciones_R), NULL);
-        std::cout << "Nombre_Fuente_Energetica_C:" << Nombre_Fuente_Energetica_C << "\n";
-        std::cout << "Direccion_Instalaciones_C:" << Direccion_Instalaciones_C << "\n";
-        std::cout << "Nombre_Fuente_Energetica_R:" << Nombre_Fuente_Energetica_R << "\n";
-        std::cout << "Direccion_Instalaciones_R:" << Direccion_Instalaciones_R << "\n";
+        std::cout << "Nombre_Fuente_Energetica_C: " << Nombre_Fuente_Energetica_C << "\n";
+        std::cout << "Direccion_Instalaciones_C:  " << Direccion_Instalaciones_C << "\n";
+        std::cout << "Nombre_Fuente_Energetica_R: " << Nombre_Fuente_Energetica_R << "\n";
+        std::cout << "Direccion_Instalaciones_R:  " << Direccion_Instalaciones_R << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
     
@@ -267,13 +267,13 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 6, SQL_C_CHAR, Posicion_Empresa, sizeof(Posicion_Empresa), NULL);
         SQLGetData(handler, 7, SQL_C_LONG, &Ventas, 0, NULL);
         SQLGetData(handler, 8, SQL_C_LONG, &Incentivo, 0, NULL);
-        std::cout << "DNI:" << DNI << "\n";
-        std::cout << "Nombre:" << Nombre << "\n";
-        std::cout << "Apellidos:" << Apellidos << "\n";
-        std::cout << "Telefono:" << Telefono << "\n";
-        std::cout << "Correo_Electronico:" << Correo_Electronico << "\n";
-        std::cout << "Posicion_Empresa:" << Posicion_Empresa << "\n";
-        std::cout << "Ventas:" << Ventas << "\n";
+        std::cout << "DNI:                " << DNI << "\n";
+        std::cout << "Nombre:             " << Nombre << "\n";
+        std::cout << "Apellidos:          " << Apellidos << "\n";
+        std::cout << "Telefono:           " << Telefono << "\n";
+        std::cout << "Correo_Electronico: " << Correo_Electronico << "\n";
+        std::cout << "Posicion_Empresa:   " << Posicion_Empresa << "\n";
+        std::cout << "Ventas:             " << Ventas << "\n";
         std::cout << "Incentivo:" << Incentivo << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
@@ -287,9 +287,9 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 1, SQL_C_CHAR, DNI_S, sizeof(DNI_S), NULL);
         SQLGetData(handler, 2, SQL_C_LONG, &ID_Incidencia_S, 0, NULL);
         SQLGetData(handler, 3, SQL_C_LONG, &ID_Contrato_I_S, 0, NULL);
-        std::cout << "DNI_S:" << DNI_S << "\n";
-        std::cout << "ID_Incidencia_S:" << ID_Incidencia_S << "\n";
-        std::cout << "ID_Contrato_I_S:" << ID_Contrato_I_S << "\n";
+        std::cout << "DNI_S:           " << DNI_S << "\n";
+        std::cout << "ID_Incidencia_S: " << ID_Incidencia_S << "\n";
+        std::cout << "ID_Contrato_I_S: " << ID_Contrato_I_S << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -300,8 +300,8 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, DNI_C, sizeof(DNI_C), NULL);
         SQLGetData(handler, 2, SQL_C_CHAR, Direccion_C, sizeof(Direccion_C), NULL);
-        std::cout << "DNI_C:" << DNI_C << "\n";
-        std::cout << "Direccion_C:" << Direccion_C << "\n";
+        std::cout << "DNI_C:       " << DNI_C << "\n";
+        std::cout << "Direccion_C: " << Direccion_C << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -323,17 +323,17 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 9, SQL_C_CHAR, Fecha_Registro, sizeof(Fecha_Registro), NULL);
         SQLGetData(handler, 10, SQL_C_CHAR, Fecha_Baja, sizeof(Fecha_Baja), NULL);
         SQLGetData(handler, 11, SQL_C_CHAR, Motivo_Baja, sizeof(Motivo_Baja), NULL);
-        std::cout << "DNI_CIF:" << DNI_CIF << "\n";
-        std::cout << "Nombre_Cl:" << Nombre_Cl << "\n";
-        std::cout << "Apellidos_Cl:" << Apellidos_Cl << "\n";
-        std::cout << "Direccion_Cl:" << Direccion_Cl << "\n";
-        std::cout << "Telefono_Cl:" << Telefono_Cl << "\n";
-        std::cout << "Email_Cl:" << Email_Cl << "\n";
-        std::cout << "Estado:" << Estado << "\n";
-        std::cout << "ID_Cliente:" << ID_Cliente << "\n";
-        std::cout << "Fecha_Registro:" << Fecha_Registro << "\n";
-        std::cout << "Fecha_Baja:" << Fecha_Baja << "\n";
-        std::cout << "Motivo_Baja:" << Motivo_Baja << "\n";
+        std::cout << "DNI_CIF:        " << DNI_CIF << "\n";
+        std::cout << "Nombre_Cl:      " << Nombre_Cl << "\n";
+        std::cout << "Apellidos_Cl:   " << Apellidos_Cl << "\n";
+        std::cout << "Direccion_Cl:   " << Direccion_Cl << "\n";
+        std::cout << "Telefono_Cl:    " << Telefono_Cl << "\n";
+        std::cout << "Email_Cl:       " << Email_Cl << "\n";
+        std::cout << "Estado:         " << Estado << "\n";
+        std::cout << "ID_Cliente:     " << ID_Cliente << "\n";
+        std::cout << "Fecha_Registro: " << Fecha_Registro << "\n";
+        std::cout << "Fecha_Baja:     " << Fecha_Baja << "\n";
+        std::cout << "Motivo_Baja:    " << Motivo_Baja << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -355,16 +355,16 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 8, SQL_C_CHAR, Fecha_Fin, sizeof(Fecha_Fin), NULL);
         SQLGetData(handler, 9, SQL_C_CHAR, Estado_Con, sizeof(Estado_Con), NULL);
         SQLGetData(handler, 10, SQL_C_CHAR, DNI_CIF_Con, sizeof(DNI_CIF_Con), NULL);
-        std::cout << "ID_Contrato:" << ID_Contrato << "\n";
-        std::cout << "CUPS:" << CUPS << "\n";
-        std::cout << "Tipo_Contrato_Con:" << Tipo_Contrato_Con << "\n";
-        std::cout << "Potencia_Con:" << Potencia_Con << "\n";
-        std::cout << "Tarifa:" << Tarifa << "\n";
-        std::cout << "IBAN:" << IBAN << "\n";
-        std::cout << "Fecha_Inicio:" << Fecha_Inicio << "\n";
-        std::cout << "Fecha_Fin:" << Fecha_Fin << "\n";
-        std::cout << "Estado_Con:" << Estado_Con << "\n";
-        std::cout << "DNI_CIF_Con:" << DNI_CIF_Con << "\n";
+        std::cout << "ID_Contrato:       " << ID_Contrato << "\n";
+        std::cout << "CUPS:              " << CUPS << "\n";
+        std::cout << "Tipo_Contrato_Con: " << Tipo_Contrato_Con << "\n";
+        std::cout << "Potencia_Con:      " << Potencia_Con << "\n";
+        std::cout << "Tarifa:            " << Tarifa << "\n";
+        std::cout << "IBAN:              " << IBAN << "\n";
+        std::cout << "Fecha_Inicio:      " << Fecha_Inicio << "\n";
+        std::cout << "Fecha_Fin:         " << Fecha_Fin << "\n";
+        std::cout << "Estado_Con:        " << Estado_Con << "\n";
+        std::cout << "DNI_CIF_Con:       " << DNI_CIF_Con << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -376,8 +376,8 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, DNI_Asociado, sizeof(DNI_Asociado), NULL);
         SQLGetData(handler, 2, SQL_C_LONG, &ID_Contrato_A, 0, NULL);
-        std::cout << "DNI_Asociado:" << DNI_Asociado << "\n";
-        std::cout << "ID_Contrato_A:" << ID_Contrato_A << "\n";
+        std::cout << "DNI_Asociado:  " << DNI_Asociado << "\n";
+        std::cout << "ID_Contrato_A: " << ID_Contrato_A << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -1306,14 +1306,15 @@ void crearTriggerContratosBaja(ConexionADB& conexion, SQLHSTMT handler) {
         CREATE OR REPLACE TRIGGER TRG_FINALIZAR_CONTRATOS_BAJA
         AFTER UPDATE OF Estado ON Cliente
         FOR EACH ROW
-        WHEN (NEW.Estado = 'Inactivo' AND OLD.Estado <> 'Inactivo')
         BEGIN
-            -- Actualizar todos los contratos activos a 'Finalizado'
-            UPDATE Contrato
-            SET Estado = 'Finalizado',
-                Fecha_Fin = SYSDATE
-            WHERE DNI_CIF = :NEW.DNI_CIF
-            AND Estado = 'Activo';
+            IF (:NEW.Estado = 'Inactivo' AND :OLD.Estado <> 'Inactivo') THEN
+                -- Actualizar todos los contratos activos a 'Finalizado'
+                UPDATE Contrato
+                SET Estado = 'Finalizado',
+                    Fecha_Fin = SYSDATE
+                WHERE DNI_CIF = :NEW.DNI_CIF
+                AND Estado = 'Activo';
+            END IF;
         END;
     )";
     

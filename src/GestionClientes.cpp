@@ -139,7 +139,7 @@ bool GestionClientes::existeTarifa(const std::string& tarifa) const {
 
 bool GestionClientes::validarTipoContrato(const std::string& tipo) const {
     // El tipo de contrato debe ser uno de los siguientes
-    if (tipo == "Doméstico" || tipo == "DOMÉSTICO" || tipo == "doméstico" ||
+    if (tipo == "Domestico" || tipo == "DOMESTICO" || tipo == "domestico" ||
         tipo == "Empresarial" || tipo == "EMPRESARIAL" || tipo == "empresarial" ||
         tipo == "Industrial" || tipo == "INDUSTRIAL" || tipo == "industrial") {
         return true;
