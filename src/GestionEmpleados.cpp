@@ -3,6 +3,11 @@
 #include <sqltypes.h>
 #include <iostream>
 #include <algorithm>
+#include <regex>        // Para validaciones básicas
+#include <sstream>      // Para conversiones simples
+#include <ctime>        // Para obtener la fecha actual
+#include <iomanip>      // Para formatear fechas
+
 
 // Función para escapar comillas simples en cadenas SQL
 std::string escapeSQLE(const std::string& str) {
@@ -35,6 +40,34 @@ void mostrarErrorE(SQLHSTMT stmt) {
     std::cerr << "Mensaje : " << msg << "\n";
 }
 
+bool GestionEmpleados::validarFormatoDNI_E(const std::string& dni_cif) const {
+    if (dni_cif.empty() || dni_cif.length() > 9)
+        return false;
+
+    // Expresiones regulares para validar DNI/CIF
+    // Para DNI: 8 dígitos seguidos de una letra
+    std::regex patron_dni("^[0-9]{8}[A-Za-z]$");
+    // Para CIF: 1 letra, 8 dígitos
+    std::regex patron_cif("^[A-Za-z][0-9]{8}$");
+
+    return std::regex_match(dni_cif, patron_dni) || std::regex_match(dni_cif, patron_cif);
+}
+
+bool GestionEmpleados::validarFormatoEmail_E(const std::string& email) const {
+    // Expresión regular para validar correo electrónico (blabla@blabla.blabla)
+    std::regex patron_email("^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    return std::regex_match(email, patron_email);
+}
+
+bool GestionEmpleados::validarFormatoTelefono_E(const std::string& telefono) const {
+    if (telefono.length() != 9 && telefono.length() != 12 && telefono.length() !=13) // 9 dígitos o prefijo seguido de 9 dígitos
+        return false;
+
+    // Expresión regular para validar que todo son números
+    std::regex patron_telefono(R"(^(\+\d{1,3})?\d{9}$)");
+    return std::regex_match(telefono, patron_telefono);
+}
+
 
 GestionEmpleados::GestionEmpleados(ConexionADB& con)
     : conexion(con) {
@@ -49,6 +82,23 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
         if (!conexion.isConnected()) {
             return false;
         }
+
+            // Validaciones de formato
+        if (!validarFormatoDNI_E(dni_empleado)) {
+            std::cout << "Error: DNI/CIF con formato incorrecto.\n";
+            return false;
+        }
+
+        if (!validarFormatoEmail_E(correo_electronico)) {
+            std::cout << "Error: Email con formato incorrecto.\n";
+            return false;
+        }
+
+        if (!validarFormatoTelefono_E(telefono)) {
+            std::cout << "Error: Teléfono con formato incorrecto (debe ser 9 dígitos).\n";
+            return false;
+        }
+
 
         SQLHDBC con = conexion.getConnection();
         SQLHSTMT handler = SQL_NULL_HSTMT;
@@ -225,8 +275,9 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             std::cout << "3. Teléfono\n";
             std::cout << "4. Correo Electrónico\n";
             std::cout << "5. Puesto\n";
-            std::cout << "6.Ventas\n";
-            std::cout << "7. Salir\n";
+            std::cout << "6. Ventas\n";
+            std::cout << "7. Salario\n";
+            std::cout << "8. Salir\n";
             std::cin >> n;
             std::cin.ignore(); // Limpiar el buffer de entrada
             std::string campo;
@@ -237,7 +288,8 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
                 case 4:campo = "Correo_Electronico"; break;
                 case 5:campo = "Posicion_Empresa"; break;
                 case 6:campo = "Ventas"; break;
-                case 7:{
+                case 7: campo = "Salario"; break;
+                case 8:{
                     std::cout << "Saliendo de la modificación de empleado.\n";
                     return datos_modificados;
                     break;
@@ -249,7 +301,19 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             std::cout << "Ingrese el nuevo " << campo << ":";
             std::getline(std::cin, nuevo);
             std::string actualizar;
-            if(campo == "Ventas"){
+            if(campo == "Telefono"){
+                if (!validarFormatoTelefono_E(nuevo)) {
+                    std::cout << "Error: Teléfono con formato incorrecto (debe ser 9 dígitos).\n";
+                    continue;
+                }
+            }
+            if(campo == "Correo_Electronico"){
+                if (!validarFormatoEmail_E(nuevo)) {
+                    std::cout << "Error: Email con formato incorrecto.\n";
+                    continue;
+                }
+            }
+            if(campo == "Ventas" || campo == "Salario"){
                 actualizar = "UPDATE Empleado SET " + campo + " = '" + nuevo + "' WHERE DNI = '" + dni_empleado_esc + "';";
 
             } else {

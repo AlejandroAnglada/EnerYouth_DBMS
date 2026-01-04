@@ -17,6 +17,7 @@ struct EmpleadoInfo {
     std::string puesto;
     int ventas;
     int incentivo;
+    int salario;
 };
 
 /**
@@ -35,6 +36,30 @@ private:
      * evitando que esta clase gestione directamente la apertura o cierre de la misma.
      */
     ConexionADB& conexion;
+
+        /* ================ MÉTODOS PRIVADOS PARA VALIDACIONES INTERNAS ================ */
+
+    /**
+     * @brief Valida el formato del DNI o CIF.
+     * @param dni_cif DNI o CIF a validar.
+     * @return true si el formato es válido; false en caso contrario.
+     */
+    bool validarFormatoDNI_E(const std::string& dni_cif) const;
+
+    /**
+     * @brief Valida el formato del correo electrónico.
+     * @param email Correo electrónico a validar.
+     * @return true si el formato es válido; false en caso contrario.
+     */
+    bool validarFormatoEmail_E(const std::string& email) const;
+
+    /**
+     * @brief Valida el formato del teléfono.
+     * @param telefono Teléfono a validar.
+     * @return true si el formato es válido; false en caso contrario.
+     */
+    bool validarFormatoTelefono_E(const std::string& telefono) const;
+
 public:
     /**
      * @brief Constructor.
