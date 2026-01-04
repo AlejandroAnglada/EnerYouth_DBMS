@@ -681,9 +681,9 @@ bool GestionClientes::crearContrato(const std::string& dni_cif,
     
     // Controlamos que fecha_fin pueda ser opcional
     if (fecha_fin.empty()) {
-        consulta += "NULL, 'Activo');";
+        consulta += ", NULL, 'Activo');";
     } else {
-        consulta += "TO_DATE('" + fecha_fin + "', 'YYYY-MM-DD'), 'Activo');";
+        consulta += ", TO_DATE('" + fecha_fin + "', 'YYYY-MM-DD'), 'Activo');";
     }
 
     SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);
@@ -739,7 +739,9 @@ bool GestionClientes::finalizarContrato(int id_contrato) {
     strftime(fecha_fin, sizeof(fecha_fin), "%Y-%m-%d", timeinfo);
 
     // Construimos la sentencia UPDATE
-    std::string consulta = "UPDATE Contrato SET Estado = 'Finalizado', Fecha_Fin = '" + std::string(fecha_fin) + "' WHERE ID_Contrato = " + std::to_string(id_contrato) + ";";
+    std::string consulta = "UPDATE Contrato SET Estado = 'Finalizado', Fecha_Fin = TO_DATE('" 
+                            + std::string(fecha_fin) + "', 'YYYY-MM-DD') WHERE ID_Contrato = " 
+                            + std::to_string(id_contrato) + ";";
 
     SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
