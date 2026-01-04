@@ -38,7 +38,7 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
             "DNI_CIF VARCHAR(9) NOT NULL,"                      // Recien añadido
             "CONSTRAINT UQ_TIPO_CONTRATO UNIQUE (Tipo_Contrato),"
             // Modificado añadiendo opciones de estado
-            "CONSTRAINT CHK_CONTRATO_ESTADO CHECK (Estado IN ('Activo', 'Suspendido', 'Finalizado')),"
+            "CONSTRAINT CHK_CONTRATO_ESTADO CHECK (Estado IN ('Activo', 'Finalizado')),"
             "CONSTRAINT CHK_POTENCIA CHECK (Potencia_Con > 3),"
             "FOREIGN KEY (DNI_CIF) REFERENCES Cliente(DNI_CIF)" // Recien añadido
         ");", SQL_NTS);
@@ -151,8 +151,9 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
         "CREATE TABLE Asociado ("
             "DNI_Asociado VARCHAR(9) NOT NULL,"
             "ID_Contrato_A NUMBER(9) NOT NULL,"
-            "FOREIGN KEY (DNI_Asociado) REFERENCES Cliente(DNI_CIF),"
-            "CONSTRAINT PK_ASOCIADO PRIMARY KEY (DNI_Asociado, ID_Contrato_A)"
+            "CONSTRAINT PK_ASOCIADO PRIMARY KEY (DNI_Asociado, ID_Contrato_A),"
+            "CONSTRAINT FK_ASOCIADO_CLIENTE FOREIGN KEY (DNI_Asociado) REFERENCES Cliente(DNI_CIF),"
+            "CONSTRAINT FK_ASOCIADO_CONTRATO FOREIGN KEY (ID_Contrato_A) REFERENCES Contrato(ID_Contrato)"
         ");", SQL_NTS);
     if (retAsociado != SQL_SUCCESS && retAsociado != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "Error creando tabla Asociado\n";
