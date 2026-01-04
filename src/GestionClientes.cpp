@@ -814,7 +814,7 @@ bool GestionClientes::bajaCliente(const std::string& dni_cif,
 
     SQLINTEGER num_contratos_activos = 0;
     SQLGetData(handler, 1, SQL_C_SLONG, &num_contratos_activos, 0, NULL);
-
+/*
     // Si tiene contratos activos no se puede dar de baja
     if (num_contratos_activos > 0) {
         std::cout << "Error: No se puede dar de baja al cliente. Tiene " << num_contratos_activos << " contrato(s) activo(s).\n";
@@ -822,7 +822,7 @@ bool GestionClientes::bajaCliente(const std::string& dni_cif,
         SQLFreeHandle(SQL_HANDLE_STMT, handler);
         return false;
     }
-
+*/
     // Limpiar el statement para la siguiente consulta
     SQLFreeStmt(handler, SQL_CLOSE);
 
