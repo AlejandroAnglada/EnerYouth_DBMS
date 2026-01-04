@@ -116,7 +116,7 @@ void crearTablas(ConexionADB &conexion, SQLHSTMT handler) {
             "Posicion_Empresa VARCHAR(20) DEFAULT 'Empleado General',"
             "Ventas NUMBER(9) DEFAULT 0,"
             "Incentivo NUMBER(10) DEFAULT 0,"
-            "Salario NUMBER(10) DEFAULT 1500.00,"
+            "Salario NUMBER(10) DEFAULT 1500.00"
         ");", SQL_NTS);
     if (retEmpleado != SQL_SUCCESS && retEmpleado != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "Error creando tabla Empleado\n";
