@@ -439,7 +439,7 @@ bool GestionRecursosEnergeticos::cederPotencia(
         "SELECT Potencia_Actual "
         "FROM Instalacion_Energetica "
         "WHERE (Direccion_Instalaciones = '" + dirCedente + "' "
-        "AND Nombre_Fuente_Energetica = '" + tipoCedente + "'):";
+        "AND Nombre_Fuente_Energetica = '" + tipoCedente + "');";
 
     // Ejecutamos y extraemos los datos de la columna vista.
     ret = SQLExecDirect(handler, (SQLCHAR*)q1.c_str(), SQL_NTS);
@@ -450,6 +450,8 @@ bool GestionRecursosEnergeticos::cederPotencia(
             SQLFreeHandle(SQL_HANDLE_STMT, handler);
             return false;
         }
+    } else {
+        std::cout << "Error obteniendo energía.\n";
     }
     // Liberamos el cursor para la siguiente consulta en el mismo handler.
     SQLFreeStmt(handler, SQL_CLOSE);
@@ -473,6 +475,8 @@ bool GestionRecursosEnergeticos::cederPotencia(
             SQLFreeHandle(SQL_HANDLE_STMT, handler);
             return false;
         }
+    } else {
+        std::cout << "Error obteniendo energía.\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
