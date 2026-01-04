@@ -1101,7 +1101,7 @@ void gestionClientes(GestionClientes &clientes) {
     do {
         std::cout << "\n\nGestion de Clientes seleccionada.\n";
         std::cout << "--Bienvenido al subsistema de gestion de clientes---\n";
-        std::cout << "Aqui podra dar de alta y de baja a clientes, consultar sus datos, actualizar su información y crear yfinalizar contratos.\n";
+        std::cout << "Aqui podra dar de alta y de baja a clientes, consultar sus datos, actualizar su informacion y crear y finalizar contratos.\n";
         std::cout << "\n===== MENU GESTION DE CLIENTES =====\n";
         std::cout << "1. Dar de alta cliente\n";
         std::cout << "2. Consultar cliente\n";
@@ -1129,19 +1129,19 @@ void gestionClientes(GestionClientes &clientes) {
                 std::cout << "Introduzca los apellidos del cliente: ";
                 std::getline(std::cin, apellidos);
                 
-                std::cout << "Introduzca la dirección del cliente: ";
+                std::cout << "Introduzca la direccion del cliente: ";
                 std::getline(std::cin, direccion);
                 
-                std::cout << "Introduzca el teléfono del cliente (9 dígitos): ";
+                std::cout << "Introduzca el telefono del cliente (9 digitos): ";
                 std::getline(std::cin, telefono);
                 
                 std::cout << "Introduzca el email del cliente: ";
                 std::getline(std::cin, email);
 
                 if (clientes.altaCliente(dni_cif, nombre, apellidos, direccion, telefono, email)) {
-                    std::cout << "\n✓ Cliente dado de alta correctamente.\n";
+                    std::cout << "\n Cliente dado de alta correctamente.\n";
                 } else {
-                    std::cout << "\n✗ Error al dar de alta el cliente.\n";
+                    std::cout << "\n Error al dar de alta el cliente.\n";
                 }
                 break;
             }
@@ -1156,9 +1156,9 @@ void gestionClientes(GestionClientes &clientes) {
                 std::getline(std::cin, dni_cif);
 
                 if (clientes.consultarCliente(dni_cif, info)) {
-                    std::cout << "\n✓ Consulta realizada correctamente.\n";
+                    std::cout << "\n Consulta realizada correctamente.\n";
                 } else {
-                    std::cout << "\n✗ Error al consultar el cliente.\n";
+                    std::cout << "\n Error al consultar el cliente.\n";
                 }
                 break;
             }
@@ -1168,7 +1168,7 @@ void gestionClientes(GestionClientes &clientes) {
                 std::string dni_cif, campo, valor_nuevo;
                 std::cin.ignore();
                 
-                std::cout << "\n------ ACTUALIZACIÓN DE CLIENTE ------\n";
+                std::cout << "\n------ ACTUALIZACION DE CLIENTE ------\n";
                 std::cout << "Introduzca el DNI/CIF del cliente a actualizar: ";
                 std::getline(std::cin, dni_cif);
                 
@@ -1185,9 +1185,9 @@ void gestionClientes(GestionClientes &clientes) {
                 std::getline(std::cin, valor_nuevo);
 
                 if (clientes.actualizarCliente(dni_cif, campo, valor_nuevo)) {
-                    std::cout << "\n✓ Cliente actualizado correctamente.\n";
+                    std::cout << "\n Cliente actualizado correctamente.\n";
                 } else {
-                    std::cout << "\n✗ Error al actualizar el cliente.\n";
+                    std::cout << "\n Error al actualizar el cliente.\n";
                 }
                 break;
             }
@@ -1198,7 +1198,7 @@ void gestionClientes(GestionClientes &clientes) {
                 double potencia_con;
                 std::cin.ignore();
                 
-                std::cout << "\n------ FORMULARIO DE CREACIÓN DE CONTRATO ------\n";
+                std::cout << "\n------ FORMULARIO DE CREACION DE CONTRATO ------\n";
                 std::cout << "Introduzca el DNI/CIF del cliente: ";
                 std::getline(std::cin, dni_cif);
                 
@@ -1215,7 +1215,7 @@ void gestionClientes(GestionClientes &clientes) {
                 std::cout << "Introduzca la tarifa del contrato (Fija/Variable/Nocturna): "; 
                 std::getline(std::cin, tarifa);
                 
-                std::cout << "Introduzca el IBAN para domiciliación: ";
+                std::cout << "Introduzca el IBAN para domiciliacion: ";
                 std::getline(std::cin, iban);
                 
                 std::cout << "Introduzca la fecha de inicio (YYYY-MM-DD): ";
@@ -1225,9 +1225,9 @@ void gestionClientes(GestionClientes &clientes) {
                 std::getline(std::cin, fecha_fin);
 
                 if (clientes.crearContrato(dni_cif, cups, tipo_contrato, potencia_con, tarifa, iban, fecha_inicio, fecha_fin)) {
-                    std::cout << "\n✓ Contrato creado correctamente.\n";
+                    std::cout << "\n Contrato creado correctamente.\n";
                 } else {
-                    std::cout << "\n✗ Error al crear el contrato.\n";
+                    std::cout << "\n Error al crear el contrato.\n";
                 }
                 break;
             }
@@ -1237,14 +1237,14 @@ void gestionClientes(GestionClientes &clientes) {
                 int id_contrato;
                 std::cin.ignore();
                 
-                std::cout << "\n------ FINALIZACIÓN DE CONTRATO ------\n";
+                std::cout << "\n------ FINALIZACION DE CONTRATO ------\n";
                 std::cout << "Introduzca el ID del contrato a finalizar: ";
                 std::cin >> id_contrato;
 
                 if (clientes.finalizarContrato(id_contrato)) {
-                    std::cout << "\n✓ Contrato finalizado correctamente.\n";
+                    std::cout << "\n Contrato finalizado correctamente.\n";
                 } else {
-                    std::cout << "\n✗ Error al finalizar el contrato.\n";
+                    std::cout << "\n Error al finalizar el contrato.\n";
                 }
                 break;
             }

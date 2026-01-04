@@ -400,7 +400,7 @@ bool GestionClientes::altaCliente(const std::string& dni_cif,
     // Construimos la sentencia INSERT
     std::string consulta = "INSERT INTO Cliente (ID_Cliente, DNI_CIF, Nombre, Apellidos, Direccion, Telefono, Email, Estado, Fecha_Registro) "
                           "VALUES (" + std::to_string(id_cliente) + ", '" + dni_esc + "', '" + nombre_esc + "', '" + apellidos_esc + "', '"
-                          + direccion_esc + "', '" + telefono_esc + "', '" + email_esc + "', 'Activo', '" + fecha_registro + "');";
+                          + direccion_esc + "', '" + telefono_esc + "', '" + email_esc + "', 'Activo', TO_DATE('" + fecha_registro + "', 'YYYY-MM-DD'));";
 
     SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
@@ -444,7 +444,7 @@ bool GestionClientes::consultarCliente(const std::string& dni_cif,
 
     // Ejecutamos la consulta
     std::string dni_esc = escapeSQLC(dni_cif);
-    std::string consulta = "SELECT ID_Cliente, DNI_CIF, Nombre, Apellidos, Direccion, Telefono, Correo_Electronico, Estado, Fecha_Registro, Fecha_Baja, Motivo_Baja "
+    std::string consulta = "SELECT ID_Cliente, DNI_CIF, Nombre, Apellidos, Direccion, Telefono, Email, Estado, Fecha_Registro, Fecha_Baja, Motivo_Baja "
                           "FROM Cliente WHERE DNI_CIF = '" + dni_esc + "';";
     
     SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);
@@ -529,8 +529,8 @@ bool GestionClientes::consultarCliente(const std::string& dni_cif,
     std::cout << "  - DNI/CIF:           " << info.dni_cif << "\n";
     std::cout << "  - Nombre:            " << info.nombre << "\n";
     std::cout << "  - Apellidos:         " << info.apellidos << "\n";
-    std::cout << "  - Dirección:         " << info.direccion << "\n";
-    std::cout << "  - Teléfono:          " << info.telefono << "\n";
+    std::cout << "  - Direccion:         " << info.direccion << "\n";
+    std::cout << "  - Telefono:          " << info.telefono << "\n";
     std::cout << "  - Email:             " << info.email << "\n";
     std::cout << "\nEstado y Fechas:\n";
     std::cout << "  - Estado:            " << info.estado << "\n";
@@ -554,7 +554,7 @@ bool GestionClientes::actualizarCliente(const std::string& dni_cif,
                                        const std::string& valor_nuevo) {
     // Comprobar que la conexión esté establecida
     if (!conexion.isConnected()) {
-        std::cout << "Error: La conexión no está establecida.\n";
+        std::cout << "Error: La conexion no esta establecida.\n";
         return false;
     }
 
@@ -575,16 +575,16 @@ bool GestionClientes::actualizarCliente(const std::string& dni_cif,
     } else if (campo == "telefono" || campo == "Telefono" || campo == "TELEFONO") {
         columna = "Telefono";
     } else if (campo == "email" || campo == "Email" || campo == "EMAIL") {
-        columna = "Correo_Electronico";
+        columna = "Email";
     } else {
-        std::cout << "Error: Campo '" << campo << "' no válido.\n";
+        std::cout << "Error: Campo '" << campo << "' no valido.\n";
         std::cout << "Campos permitidos: nombre, apellidos, direccion, telefono, email.\n";
         return false;
     }
 
     // Validar según el tipo de campo
     if (campo == "telefono" && !validarFormatoTelefono(valor_nuevo)) {
-        std::cout << "Error: Teléfono con formato incorrecto (debe ser 9 dígitos).\n";
+        std::cout << "Error: Telefono con formato incorrecto (debe ser 9 digitos).\n";
         return false;
     }
 
@@ -635,7 +635,7 @@ bool GestionClientes::crearContrato(const std::string& dni_cif,
                                     const std::string& fecha_fin) {
     // Comprobar que la conexión esté establecida
     if (!conexion.isConnected()) {
-        std::cout << "Error: La conexión no está establecida.\n";
+        std::cout << "Error: La conexion no esta establecida.\n";
         return false;
     }
 
@@ -691,7 +691,7 @@ bool GestionClientes::crearContrato(const std::string& dni_cif,
     // Construimos la sentencia INSERT
     std::string consulta = "INSERT INTO Contrato (ID_Contrato, DNI_CIF, CUPS, Tipo_Contrato, Potencia_Con, Tarifa, IBAN, Fecha_Inicio, Fecha_Fin, Estado) "
                           "VALUES (" + std::to_string(id_contrato) + ", '" + dni_esc + "', '" + cups_esc + "', '" + tipo_esc + "', "
-                          + std::to_string(potencia_con) + ", '" + tarifa_esc + "', '" + iban_esc + "', '" + fecha_inicio + "', ";
+                          + std::to_string(potencia_con) + ", '" + tarifa_esc + "', '" + iban_esc + "', TO_DATE('" + fecha_inicio + "', 'YYYY-MM-DD')";
     
     // Controlamos que fecha_fin pueda ser opcional
     if (fecha_fin.empty()) {
@@ -778,7 +778,7 @@ bool GestionClientes::bajaCliente(const std::string& dni_cif,
                                   const std::string& motivo_baja) {
     // Comprobar que la conexión esté establecida
     if (!conexion.isConnected()) {
-        std::cout << "Error: La conexión no está establecida.\n";
+        std::cout << "Error: La conexion no esta establecida.\n";
         return false;
     }
 
@@ -834,7 +834,7 @@ bool GestionClientes::bajaCliente(const std::string& dni_cif,
     std::string motivo_esc = escapeSQLC(motivo_baja);
 
     // Sentencia UPDATE para dar de baja
-    std::string consulta_baja = "UPDATE Cliente SET Estado = 'Baja', Fecha_Baja = '" + fecha_baja + "', Motivo_Baja = '" + motivo_esc + "' WHERE DNI_CIF = '" + dni_esc + "';";
+    std::string consulta_baja = "UPDATE Cliente SET Estado = 'Inactivo', Fecha_Baja = TO_DATE('" + fecha_baja + "', 'YYYY-MM-DD'), Motivo_Baja = '" + motivo_esc + "' WHERE DNI_CIF = '" + dni_esc + "';";
 
     ret = SQLExecDirectA(handler, (SQLCHAR*)consulta_baja.c_str(), SQL_NTS);
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
