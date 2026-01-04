@@ -307,7 +307,9 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
     // Tabla Cliente
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Cliente;", SQL_NTS);
     std::cout << "\n--Tabla Cliente:--\n";
-    SQLVARCHAR DNI_CIF[10], Nombre_Cl[21], Apellidos_Cl[81], Direccion_Cl[101], Telefono_Cl[10], Email_Cl[101], Estado[11];
+    SQLINTEGER ID_Cliente;
+    SQLVARCHAR DNI_CIF[10], Nombre_Cl[21], Apellidos_Cl[81], Direccion_Cl[101], Telefono_Cl[10], Email_Cl[101], Estado[11], Motivo_Baja[201];
+    SQLCHAR Fecha_Registro[11], Fecha_Baja[11];
     while (SQLFetch(handler) == SQL_SUCCESS) {
         SQLGetData(handler, 1, SQL_C_CHAR, DNI_CIF, sizeof(DNI_CIF), NULL);
         SQLGetData(handler, 2, SQL_C_CHAR, Nombre_Cl, sizeof(Nombre_Cl), NULL);
@@ -316,6 +318,10 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 5, SQL_C_CHAR, Telefono_Cl, sizeof(Telefono_Cl), NULL);
         SQLGetData(handler, 6, SQL_C_CHAR, Email_Cl, sizeof(Email_Cl), NULL);
         SQLGetData(handler, 7, SQL_C_CHAR, Estado, sizeof(Estado), NULL);
+        SQLGetData(handler, 8, SQL_C_LONG, &ID_Cliente, 0, NULL);
+        SQLGetData(handler, 9, SQL_C_CHAR, Fecha_Registro, sizeof(Fecha_Registro), NULL);
+        SQLGetData(handler, 10, SQL_C_CHAR, Fecha_Baja, sizeof(Fecha_Baja), NULL);
+        SQLGetData(handler, 11, SQL_C_CHAR, Motivo_Baja, sizeof(Motivo_Baja), NULL);
         std::cout << "DNI_CIF:" << DNI_CIF << "\n";
         std::cout << "Nombre_Cl:" << Nombre_Cl << "\n";
         std::cout << "Apellidos_Cl:" << Apellidos_Cl << "\n";
@@ -323,6 +329,10 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         std::cout << "Telefono_Cl:" << Telefono_Cl << "\n";
         std::cout << "Email_Cl:" << Email_Cl << "\n";
         std::cout << "Estado:" << Estado << "\n";
+        std::cout << "ID_Cliente:" << ID_Cliente << "\n";
+        std::cout << "Fecha_Registro:" << Fecha_Registro << "\n";
+        std::cout << "Fecha_Baja:" << Fecha_Baja << "\n";
+        std::cout << "Motivo_Baja:" << Motivo_Baja << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -330,7 +340,7 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
     SQLExecDirectA(handler, (SQLCHAR*)"SELECT * FROM Contrato;", SQL_NTS);
     std::cout << "\n--Tabla Contrato:--\n";
     SQLINTEGER ID_Contrato;
-    SQLVARCHAR CUPS[23], Tipo_Contrato_Con[21], Tarifa[21], IBAN[35], Estado_Con[16];
+    SQLVARCHAR CUPS[23], Tipo_Contrato_Con[21], Tarifa[21], IBAN[35], Estado_Con[16], DNI_CIF_Con[10];
     SQLDOUBLE Potencia_Con;
     SQLCHAR Fecha_Inicio[11], Fecha_Fin[11];
     while (SQLFetch(handler) == SQL_SUCCESS) {
@@ -343,6 +353,7 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         SQLGetData(handler, 7, SQL_C_CHAR, Fecha_Inicio, sizeof(Fecha_Inicio), NULL);
         SQLGetData(handler, 8, SQL_C_CHAR, Fecha_Fin, sizeof(Fecha_Fin), NULL);
         SQLGetData(handler, 9, SQL_C_CHAR, Estado_Con, sizeof(Estado_Con), NULL);
+        SQLGetData(handler, 10, SQL_C_CHAR, DNI_CIF_Con, sizeof(DNI_CIF_Con), NULL);
         std::cout << "ID_Contrato:" << ID_Contrato << "\n";
         std::cout << "CUPS:" << CUPS << "\n";
         std::cout << "Tipo_Contrato_Con:" << Tipo_Contrato_Con << "\n";
@@ -352,6 +363,7 @@ void mostrarContenidoTablas(ConexionADB &conexion, SQLHSTMT handler) {
         std::cout << "Fecha_Inicio:" << Fecha_Inicio << "\n";
         std::cout << "Fecha_Fin:" << Fecha_Fin << "\n";
         std::cout << "Estado_Con:" << Estado_Con << "\n";
+        std::cout << "DNI_CIF_Con:" << DNI_CIF_Con << "\n";
     }
     SQLFreeStmt(handler, SQL_CLOSE);
 
@@ -562,13 +574,14 @@ void crearTriggerActualizarDatosHogar(ConexionADB &conexion, SQLHSTMT handler) {
 
     SQLRETURN retTriggerTipoContrato = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE OR REPLACE TRIGGER trg_update_tipo_contrato "
-        "AFTER UPDATE OF Tipo_Contrato ON Contrato "
-        "FOR EACH ROW "
-        "BEGIN "
-        "UPDATE Hogar "
-        "SET Tipo_Contrato_H = :NEW.Tipo_Contrato "
-        "WHERE ID_Contrato_H = :OLD.ID_Contrato; "
-        "END;", SQL_NTS);
+            "AFTER UPDATE OF Tipo_Contrato ON Contrato "
+            "FOR EACH ROW "
+            "BEGIN "
+                "UPDATE Hogar "
+                "SET Tipo_Contrato_H = :NEW.Tipo_Contrato "
+                "WHERE ID_Contrato_H = :OLD.ID_Contrato; "
+            "END;", 
+        SQL_NTS);
 
     if (retTriggerTipoContrato != SQL_SUCCESS && retTriggerTipoContrato != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "Error creando trigger trg_update_tipo_contrato\n";
@@ -578,13 +591,18 @@ void crearTriggerActualizarDatosHogar(ConexionADB &conexion, SQLHSTMT handler) {
     
     SQLRETURN retTriggerDNICliente = SQLExecDirectA(handler, (SQLCHAR*)
         "CREATE OR REPLACE TRIGGER trg_update_dni_cliente "
-        "AFTER UPDATE OF DNI_CIF ON Cliente "
-        "FOR EACH ROW "
-        "BEGIN "
-        "UPDATE Hogar "
-        "SET DNI_Cliente = :NEW.DNI_CIF "
-        "WHERE DNI_Cliente = :OLD.DNI_CIF; "
-        "END;", SQL_NTS);
+            "AFTER UPDATE OF DNI_CIF ON Cliente "
+            "FOR EACH ROW "
+            "BEGIN "
+                "UPDATE Contrato "
+                "SET DNI_CIF = :NEW.DNI_CIF "
+                "WHERE DNI_CIF = :OLD.DNI_CIF; "
+
+                "UPDATE Hogar "
+                "SET DNI_Cliente = :NEW.DNI_CIF "
+                "WHERE DNI_Cliente = :OLD.DNI_CIF; "
+            "END;", 
+        SQL_NTS);
     
     if (retTriggerDNICliente != SQL_SUCCESS && retTriggerDNICliente != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "Error creando trigger trg_update_dni_cliente\n";
@@ -1285,9 +1303,9 @@ void crearTriggerContratosBaja(ConexionADB& conexion, SQLHSTMT handler) {
     
     const char* crearTriggerCascada = R"(
         CREATE OR REPLACE TRIGGER TRG_FINALIZAR_CONTRATOS_BAJA
-        BEFORE UPDATE ON Cliente
+        AFTER UPDATE OF Estado ON Cliente
         FOR EACH ROW
-        WHEN (NEW.Estado = 'Baja' AND OLD.Estado != 'Baja')
+        WHEN (NEW.Estado = 'Inactivo' AND OLD.Estado <> 'Inactivo')
         BEGIN
             -- Actualizar todos los contratos activos a 'Finalizado'
             UPDATE Contrato
@@ -1295,7 +1313,7 @@ void crearTriggerContratosBaja(ConexionADB& conexion, SQLHSTMT handler) {
                 Fecha_Fin = SYSDATE
             WHERE DNI_CIF = :NEW.DNI_CIF
             AND Estado = 'Activo';
-        END
+        END;
     )";
     
     SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)crearTriggerCascada, SQL_NTS);

@@ -398,7 +398,7 @@ bool GestionClientes::altaCliente(const std::string& dni_cif,
     std::string email_esc = escapeSQLC(email);
 
     // Construimos la sentencia INSERT
-    std::string consulta = "INSERT INTO Cliente (ID_Cliente, DNI_CIF, Nombre, Apellidos, Direccion, Telefono, Correo_Electronico, Estado, Fecha_Registro) "
+    std::string consulta = "INSERT INTO Cliente (ID_Cliente, DNI_CIF, Nombre, Apellidos, Direccion, Telefono, Email, Estado, Fecha_Registro) "
                           "VALUES (" + std::to_string(id_cliente) + ", '" + dni_esc + "', '" + nombre_esc + "', '" + apellidos_esc + "', '"
                           + direccion_esc + "', '" + telefono_esc + "', '" + email_esc + "', 'Activo', '" + fecha_registro + "');";
 

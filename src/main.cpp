@@ -50,36 +50,46 @@ int main(){
     // Creamos trigger para finalizar contratos al dar de baja un cliente
     crearTriggerContratosBaja(conexion, handler);
 
-    // Inserto DNI en cliente e ID contrato en Contrato para poder dar de alta hogares
-    int id_contrato = 1;
-    char cups[23] = "ES12345678901256890123";
-    char tipo_contrato[21] = "Residencial";
-    double potencia_con = 5.5;
-    char tarifa[20] = "Tarifa1";
-    char iban[35] = "ES7620770024003102575766";
-    char contrato[2048];
-    sprintf(contrato, "INSERT INTO Contrato (ID_Contrato, CUPS, Tipo_Contrato, Potencia_Con, Tarifa, IBAN) VALUES (%d, '%s', '%s', %f, '%s', '%s');", id_contrato, cups, tipo_contrato, potencia_con, tarifa, iban);
-    SQLRETURN retContrato = SQLExecDirectA(handler, (SQLCHAR*) contrato, SQL_NTS);
-    if (retContrato != SQL_SUCCESS && retContrato != SQL_SUCCESS_WITH_INFO) {
-        std::cerr << "Error insertando Contrato\n";
-    }
-    SQLFreeStmt(handler, SQL_CLOSE);
-
-    SQLEndTran(SQL_HANDLE_DBC, conexion.getConnection(), SQL_COMMIT);
-
+    // Inserto un cliente y contrato para poder probar el subsitema de Transmisión/Distribución
     char dni[10] = "12345678A";
     char nombre[21] = "Juan";
     char apellidos[81] = "Perez Gomez";
     char direccion[101] = "Calle Falsa 123";
     char telefono[10] = "600123468";
     char email[101] = "juan@gmail.com";
+    int id_cliente = 1;
+    char fecha_registro[11] = "2023-10-01";
+    char fecha_baja[11] = "";
+    char motivo_baja[256] = "me he cansado de esta empresa";
     char cliente[2048];
-    sprintf(cliente, "INSERT INTO Cliente (DNI_CIF, nombre, apellidos, direccion, telefono, email) VALUES ('%s', '%s', '%s', '%s', '%s', '%s');", dni, nombre, apellidos, direccion, telefono, email);
+    sprintf(cliente, "INSERT INTO Cliente (DNI_CIF, Nombre, Apellidos, Direccion, Telefono, Email, ID_Cliente, Fecha_Registro, Fecha_Baja, Motivo_Baja) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', %d, TO_DATE('%s', 'YYYY-MM-DD'), TO_DATE('%s', 'YYYY-MM-DD'), '%s');", dni, nombre, apellidos, direccion, telefono, email, id_cliente, fecha_registro, fecha_baja, motivo_baja);
     
     SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*) cliente, SQL_NTS);
     if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
         std::cerr << "Error insertando Cliente\n";
     }
+    SQLFreeStmt(handler, SQL_CLOSE);
+    SQLEndTran(SQL_HANDLE_DBC, conexion.getConnection(), SQL_COMMIT);
+
+    int id_contrato = 1;
+    char cups[23] = "ES12345678901256890123";
+    char tipo_contrato[21] = "Residencial";
+    double potencia_con = 5.5;
+    char tarifa[20] = "Tarifa1";
+    char iban[35] = "ES7620770024003102575766";
+    char dni_cif[10] = "12345678A";
+    char fecha_inicio[11] = "2023-10-01";
+    char fecha_fin[11] = "2024-10-01";
+    char estado_contrato[10] = "Activo";
+    char contrato[2048];
+    sprintf(contrato, "INSERT INTO Contrato (ID_Contrato, CUPS, Tipo_Contrato, Potencia_Con, Tarifa, IBAN, DNI_CIF) VALUES (%d, '%s', '%s', %f, '%s', '%s', '%s');", id_contrato, cups, tipo_contrato, potencia_con, tarifa, iban, dni_cif);
+    SQLRETURN retContrato = SQLExecDirectA(handler, (SQLCHAR*) contrato, SQL_NTS);
+    if (retContrato != SQL_SUCCESS && retContrato != SQL_SUCCESS_WITH_INFO) {
+        std::cerr << "Error insertando Contrato\n";
+    }
+    SQLFreeStmt(handler, SQL_CLOSE);
+    SQLEndTran(SQL_HANDLE_DBC, conexion.getConnection(), SQL_COMMIT);
+
     // Insertamos instalaciones de prueba
     insertarInstalaciones(conexion, handler);
 
