@@ -123,7 +123,7 @@ int main(){
             case 5: mostrarContenidoTablas(conexion, handler); break;
 
             case 6: std::cout << "Saliendo...\n"; break;
-            default: std::cout << "Opcion no válida.\n"; break;
+            default: std::cout << "Opcion no valida.\n"; break;
         }
     } while (opcion != 6);
 
