@@ -255,7 +255,7 @@ bool GestionRecursosEnergeticos::consultarInstalacionesPorEnergia(
             std::string sql_sentence =
                 "SELECT Direccion_Instalaciones "
                 "FROM Instalacion_Energetica "
-                "WHERE (Descripcion = '" + tipoEnergia + "');";
+                "WHERE (LOWER(Nombre_Fuente_Energetica) = LOWER('" + tipoEnergia + "'));";
 
             ret = SQLExecDirect(handler,
                                 (SQLCHAR*)sql_sentence.c_str(),
@@ -336,7 +336,7 @@ bool GestionRecursosEnergeticos::consultarIngresosPorTipoEnergia(
             std::string sql_sentence =
                 "SELECT SUM(Ingresos_Netos_Historicos) "
                 "FROM Instalacion_Energetica "
-                "WHERE (Descripcion = '" + tipoEnergia + "');";
+                "WHERE (Nombre_Fuente_Energetica = '" + tipoEnergia + "');";
 
             ret = SQLExecDirect(handler,
                                 (SQLCHAR*)sql_sentence.c_str(),
