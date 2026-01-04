@@ -95,7 +95,7 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
         }
 
         if (!validarFormatoTelefono_E(telefono)) {
-            std::cout << "Error: Teléfono con formato incorrecto (debe ser 9 dígitos).\n";
+            std::cout << "Error: Teléfono con formato incorrecto ( +PPPXXXXXXXXX, +PPXXXXXXXXX o XXXXXXXXX siendo P el prefijo y X el número).\n";
             return false;
         }
 
@@ -288,7 +288,7 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
                 case 4:campo = "Correo_Electronico"; break;
                 case 5:campo = "Posicion_Empresa"; break;
                 case 6:campo = "Ventas"; break;
-                case 7: campo = "Salario"; break;
+                case 7:campo = "Salario"; break;
                 case 8:{
                     std::cout << "Saliendo de la modificación de empleado.\n";
                     return datos_modificados;
@@ -303,7 +303,7 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             std::string actualizar;
             if(campo == "Telefono"){
                 if (!validarFormatoTelefono_E(nuevo)) {
-                    std::cout << "Error: Teléfono con formato incorrecto (debe ser 9 dígitos).\n";
+                    std::cout << "Error: Teléfono con formato incorrecto (+PPPXXXXXXXXX, +PPXXXXXXXXX o XXXXXXXXX siendo P el prefijo y X el número).\n";
                     continue;
                 }
             }
@@ -328,7 +328,7 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
             } else {
                 datos_modificados += "Campo " + campo + " actualizado a " + nuevo + ".\n";
             }
-        } while(n != 7);
+        } while(n != 8);
         
 
         // Liberamos recursos

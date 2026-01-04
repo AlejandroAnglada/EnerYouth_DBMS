@@ -623,7 +623,7 @@ void gestionEmpleados(GestionEmpleados &empleados) {
         std::cout << "\n===== MENU GESTION DE EMPLEADOS =====\n";
         std::cout << "1. Contratar empleado\n";
         std::cout << "2. Despedir empleado\n";
-        std::cout << "3. Listar emeplados\n";
+        std::cout << "3. Listar empelados\n";
         std::cout << "4. Modificar contrato\n";
         std::cout << "5. Calcular incentivos\n";
         std::cout << "6. Solucionar incidencia\n";
