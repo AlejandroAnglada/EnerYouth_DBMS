@@ -1307,7 +1307,7 @@ void crearTriggerContratosBaja(ConexionADB& conexion, SQLHSTMT handler) {
         AFTER UPDATE OF Estado ON Cliente
         FOR EACH ROW
         BEGIN
-            IF (:NEW.Estado = 'Inactivo' AND :OLD.Estado <> 'Inactivo') THEN
+            IF :NEW.Estado = 'Inactivo' AND :OLD.Estado <> 'Inactivo' THEN
                 -- Actualizar todos los contratos activos a 'Finalizado'
                 UPDATE Contrato
                 SET Estado = 'Finalizado',
