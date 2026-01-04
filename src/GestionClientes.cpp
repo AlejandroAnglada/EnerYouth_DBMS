@@ -649,6 +649,14 @@ bool GestionClientes::crearContrato(const std::string& dni_cif,
         return false;
     }
 
+    // Validar que fecha_fin sea posterior a fecha_inicio (si no se ha dejado en blanco)
+    if (!fecha_fin.empty() && fecha_inicio >= fecha_fin) {
+        std::cout << "Error: La fecha de fin debe ser posterior a la fecha de inicio.\n";
+        std::cout << "  - Fecha inicio: " << fecha_inicio << "\n";
+        std::cout << "  - Fecha fin: " << fecha_fin << "\n";
+        return false;
+    }
+
     // Validar que no existe contrato activo con ese CUPS
     if (existeContratoActivoPorCUPS(cups)) {
         std::cout << "Error: Ya existe un contrato activo con CUPS " << cups << ".\n";
