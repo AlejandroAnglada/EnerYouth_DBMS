@@ -128,45 +128,23 @@ bool GestionClientes::existeCliente(const std::string& dni_cif) const {
 }
 
 bool GestionClientes::existeTarifa(const std::string& tarifa) const {
-    // Comprobar que la conexión esté establecida
-    if (!conexion.isConnected()) {
-        return false;
+    // La tarifa debe ser una de las siguientes
+    if (tarifa == "Fija" || tarifa == "FIJA" || tarifa == "fija" || 
+        tarifa == "Variable" || tarifa == "VARIABLE" || tarifa == "variable" || 
+        tarifa == "Nocturna" || tarifa == "NOCTURNA" || tarifa == "nocturna") {
+        return true;
     }
+    return false;
+}
 
-    SQLHDBC con = conexion.getConnection();
-    SQLHSTMT handler = SQL_NULL_HSTMT;
-
-    // Inicializamos el handler para ejecutar la sentencia SQL
-    if (SQLAllocHandle(SQL_HANDLE_STMT, con, &handler) != SQL_SUCCESS) {
-        return false;
+bool GestionClientes::validarTipoContrato(const std::string& tipo) const {
+    // El tipo de contrato debe ser uno de los siguientes
+    if (tipo == "Doméstico" || tipo == "DOMÉSTICO" || tipo == "doméstico" ||
+        tipo == "Empresarial" || tipo == "EMPRESARIAL" || tipo == "empresarial" ||
+        tipo == "Industrial" || tipo == "INDUSTRIAL" || tipo == "industrial") {
+        return true;
     }
-
-    // Ejecutamos la consulta
-    std::string tarifa_esc = escapeSQLC(tarifa);
-    std::string consulta = "SELECT COUNT(*) FROM Tarifa WHERE Nombre_Tarifa = '" + tarifa_esc + "';";
-    
-    SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);
-    if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
-        std::cout << "Error al ejecutar la sentencia SQL para verificar tarifa.\n";
-        mostrarErrorC(handler);
-        SQLFreeHandle(SQL_HANDLE_STMT, handler);
-        return false;
-    }
-
-    // Comprobamos si existe la tarifa
-    if (SQLFetch(handler) != SQL_SUCCESS) {
-        SQLFreeHandle(SQL_HANDLE_STMT, handler);
-        return false;
-    }
-
-    // Obtenemos el resultado
-    SQLINTEGER count = 0;
-    SQLGetData(handler, 1, SQL_C_SLONG, &count, 0, NULL);
-
-    // Liberamos recursos
-    SQLFreeHandle(SQL_HANDLE_STMT, handler);
-
-    return count > 0;
+    return false;
 }
 
 bool GestionClientes::existeContratoActivoPorCUPS(const std::string& cups) const {
@@ -657,9 +635,17 @@ bool GestionClientes::crearContrato(const std::string& dni_cif,
         return false;
     }
 
-    // Validar que la tarifa existe
+    // Validar tipo de contrato
+    if (!validarTipoContrato(tipo_contrato)) {
+        std::cout << "Error: Tipo de contrato '" << tipo_contrato << "' no es valido.\n";
+        std::cout << "Tipos permitidos: Domestico, Empresarial, Industrial.\n";
+        return false;
+    }
+
+    // Validar tipo de tarifa
     if (!existeTarifa(tarifa)) {
-        std::cout << "Error: La tarifa '" << tarifa << "' no existe en el sistema.\n";
+        std::cout << "Error: La tarifa '" << tarifa << "' no es válida.\n";
+        std::cout << "Tipos permitidos: Fija, Variable, Nocturna.\n";
         return false;
     }
 
@@ -697,7 +683,7 @@ bool GestionClientes::crearContrato(const std::string& dni_cif,
     if (fecha_fin.empty()) {
         consulta += "NULL, 'Activo');";
     } else {
-        consulta += "'" + fecha_fin + "', 'Activo');";
+        consulta += "TO_DATE('" + fecha_fin + "', 'YYYY-MM-DD'), 'Activo');";
     }
 
     SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)consulta.c_str(), SQL_NTS);

@@ -186,11 +186,17 @@ private:
     bool validarPotencia(double potencia) const;
 
     /**
-     * @brief Verifica si existe una tarifa en la base de datos.
-     * @param tarifa Tarifa a verificar.
-     * @return true si la tarifa existe; false en caso contrario.
+     * @brief Valida el tipo de tarifa.
+     * @param tarifa Tipo de tarifa a validar.
+     * @return true si la tarifa es válida; false en caso contrario.
      */
     bool existeTarifa(const std::string& tarifa) const;
+    /**
+     * @brief Valida el tipo de contrato.
+     * @param tipo Tipo de contrato a validar.
+     * @return true si el tipo es válido; false en caso contrario.
+     */
+    bool validarTipoContrato(const std::string& tipo) const;
 
     /**
      * @brief Verifica si existe un cliente en la base de datos.
