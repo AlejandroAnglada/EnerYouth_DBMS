@@ -1,4 +1,7 @@
 var searchData=
 [
-  ['_7econexionadb_0',['~ConexionADB',['../classConexionADB.html#abdbecfd590a5de40202a53f672c56edf',1,'ConexionADB']]]
+  ['existecliente_0',['existeCliente',['../classGestionClientes.html#a0eaf995e5b2dd9a33ad9af9181a098c1',1,'GestionClientes']]],
+  ['existecontrato_1',['existeContrato',['../classGestionClientes.html#aef0bca16da100580bc98bf6e213f01b9',1,'GestionClientes']]],
+  ['existecontratoactivoporcups_2',['existeContratoActivoPorCUPS',['../classGestionClientes.html#a07416d5ddf4ffc68dd48668653b53416',1,'GestionClientes']]],
+  ['existetarifa_3',['existeTarifa',['../classGestionClientes.html#a2bcc4eb70d3e29222ec641ff4ddb810d',1,'GestionClientes']]]
 ];

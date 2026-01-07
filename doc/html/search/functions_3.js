@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['is_5fconnected_0',['is_connected',['../classConexionADB.html#a90d4124634181a28ecd00a2eb8339050',1,'ConexionADB']]]
+  ['despedirempleado_0',['despedirEmpleado',['../classGestionEmpleados.html#ac997acbbdd760d88924f4af8fadce807',1,'GestionEmpleados']]],
+  ['disconnect_1',['disconnect',['../classConexionADB.html#aec38caa15109a9cd30240a8a404555a1',1,'ConexionADB']]]
 ];

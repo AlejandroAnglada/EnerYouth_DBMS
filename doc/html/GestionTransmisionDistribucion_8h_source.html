@@ -81,7 +81,81 @@ $(document).ready(function() { init_codefold(0); });
   <div class="headertitle"><div class="title">GestionTransmisionDistribucion.h</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="fragment"></div><!-- fragment --></div><!-- contents -->
+<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef GESTION_TRANSMISION_DISTRIBUCION_H</span></div>
+<div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define GESTION_TRANSMISION_DISTRIBUCION_H</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;vector&gt;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="comment">// Forward declaration para evitar dependencias innecesarias en la cabecera.</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="keyword">class </span><a class="code hl_class" href="classConexionADB.html">ConexionADB</a>;</div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="comment">// Estructura para almacenar información de un hogar.</span></div>
+<div class="foldopen" id="foldopen00011" data-start="{" data-end="};">
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno"><a class="line" href="structHogarInfo.html">   11</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structHogarInfo.html">HogarInfo</a> {</div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span>    std::string dni_cliente;</div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span>    std::string tipo_contrato;</div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>    std::string direccion;</div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>};</div>
+</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment">// Estructura para almacenar datos de un contrato.</span></div>
+<div class="foldopen" id="foldopen00018" data-start="{" data-end="};">
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno"><a class="line" href="structDatosContrato.html">   18</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structDatosContrato.html">DatosContrato</a> {</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>    std::string cups;</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span>    std::string tipo_contrato;</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>    <span class="keywordtype">double</span> potencia_contratada;</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>    std::string tarifa;</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span>    std::string iban;</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    std::string fecha_inicio;</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    std::string fecha_fin;</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>};</div>
+</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
+<div class="foldopen" id="foldopen00036" data-start="{" data-end="};">
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno"><a class="line" href="classGestionTransmisionDistribucion.html">   36</a></span><span class="keyword">class </span><a class="code hl_class" href="classGestionTransmisionDistribucion.html">GestionTransmisionDistribucion</a> {</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="classGestionTransmisionDistribucion.html#a1c2e3a7b4ae2fa49b6550d83d9532119">   44</a></span>    <a class="code hl_class" href="classConexionADB.html">ConexionADB</a>&amp; <a class="code hl_variable" href="classGestionTransmisionDistribucion.html#a1c2e3a7b4ae2fa49b6550d83d9532119">conexion</a>;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <span class="keyword">explicit</span> <a class="code hl_class" href="classGestionTransmisionDistribucion.html">GestionTransmisionDistribucion</a>(<a class="code hl_class" href="classConexionADB.html">ConexionADB</a>&amp; con);</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="comment">/* ========================= RF-1.1 ========================= */</span></div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classGestionTransmisionDistribucion.html#aa5c18c62306fd87f85c361748a9f0463">altaHogar</a>(<span class="keyword">const</span> std::string&amp; direccion, <span class="keyword">const</span> std::string&amp; dni_cliente, <span class="keywordtype">int</span> id_contrato, </div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>                   <span class="keyword">const</span> std::string&amp; tipo_contrato = <span class="stringliteral">&quot;&quot;</span>, <span class="keyword">const</span> std::string&amp; zona_geografica = <span class="stringliteral">&quot;&quot;</span>);</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    <span class="comment">/* ========================= RF-1.2 ========================= */</span></div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classGestionTransmisionDistribucion.html#acfcc4d6305ae68fd11d75f3a17ee3253">bajaHogar</a>(<span class="keyword">const</span> std::string&amp; direccion);</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>    <span class="comment">/* ========================= RF-1.3 ========================= */</span></div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    std::vector&lt;HogarInfo&gt; <a class="code hl_function" href="classGestionTransmisionDistribucion.html#a8b739e6a0b9309652fe034de58f556a2">listarHogares</a>(<span class="keyword">const</span> std::string&amp; zona_geografica = <span class="stringliteral">&quot;&quot;</span>,</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>                                        <span class="keyword">const</span> std::string&amp; dni_cliente = <span class="stringliteral">&quot;&quot;</span>,</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>                                        <span class="keyword">const</span> std::string&amp; tipo_contrato = <span class="stringliteral">&quot;&quot;</span>);</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span> </div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="comment">/* ========================= RF-1.4 ========================= */</span></div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classGestionTransmisionDistribucion.html#a455c00fe18e967de9595b0f668ee9689">modificarHogar</a>(<span class="keyword">const</span> std::string&amp; direccion, <span class="keyword">const</span> std::string&amp; dni_cliente,</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                        <span class="keyword">const</span> std::string&amp; nuevo_dni_cliente, <span class="keyword">const</span> <a class="code hl_struct" href="structDatosContrato.html">DatosContrato</a>&amp; datos_contrato);</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    <span class="comment">/* ========================= RF-1.5 ========================= */</span></div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="classGestionTransmisionDistribucion.html#a664e7edae328bbb8603ff975f72c79b1">registrarIncidencia</a>(<span class="keywordtype">int</span> id_incidencia, <span class="keywordtype">int</span> id_contrato,</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>                             <span class="keyword">const</span> std::string&amp; descripcion, <span class="keyword">const</span> std::string&amp; tipo_incidencia,</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                             <span class="keyword">const</span> std::string&amp; fecha_incidencia, <span class="keyword">const</span> std::string&amp; fecha_resolucion,</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>                             <span class="keyword">const</span> std::string&amp; estado_incidencia);</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>};</div>
+</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><span class="preprocessor">#endif </span><span class="comment">// GESTION_TRANSMISION_DISTRIBUCION_H</span></div>
+<div class="ttc" id="aclassConexionADB_html"><div class="ttname"><a href="classConexionADB.html">ConexionADB</a></div><div class="ttdef"><b>Definition</b> ConexionADB.h:19</div></div>
+<div class="ttc" id="aclassGestionTransmisionDistribucion_html"><div class="ttname"><a href="classGestionTransmisionDistribucion.html">GestionTransmisionDistribucion</a></div><div class="ttdoc">Clase encargada de implementar el subsistema de gestión de transmisión y distribución.</div><div class="ttdef"><b>Definition</b> GestionTransmisionDistribucion.h:36</div></div>
+<div class="ttc" id="aclassGestionTransmisionDistribucion_html_a1c2e3a7b4ae2fa49b6550d83d9532119"><div class="ttname"><a href="classGestionTransmisionDistribucion.html#a1c2e3a7b4ae2fa49b6550d83d9532119">GestionTransmisionDistribucion::conexion</a></div><div class="ttdeci">ConexionADB &amp; conexion</div><div class="ttdoc">Referencia a la conexión con la base de datos.</div><div class="ttdef"><b>Definition</b> GestionTransmisionDistribucion.h:44</div></div>
+<div class="ttc" id="aclassGestionTransmisionDistribucion_html_a455c00fe18e967de9595b0f668ee9689"><div class="ttname"><a href="classGestionTransmisionDistribucion.html#a455c00fe18e967de9595b0f668ee9689">GestionTransmisionDistribucion::modificarHogar</a></div><div class="ttdeci">bool modificarHogar(const std::string &amp;direccion, const std::string &amp;dni_cliente, const std::string &amp;nuevo_dni_cliente, const DatosContrato &amp;datos_contrato)</div><div class="ttdoc">Modifica los datos de un hogar existente.</div><div class="ttdef"><b>Definition</b> GestionTransmisionDistribucion.cpp:195</div></div>
+<div class="ttc" id="aclassGestionTransmisionDistribucion_html_a664e7edae328bbb8603ff975f72c79b1"><div class="ttname"><a href="classGestionTransmisionDistribucion.html#a664e7edae328bbb8603ff975f72c79b1">GestionTransmisionDistribucion::registrarIncidencia</a></div><div class="ttdeci">bool registrarIncidencia(int id_incidencia, int id_contrato, const std::string &amp;descripcion, const std::string &amp;tipo_incidencia, const std::string &amp;fecha_incidencia, const std::string &amp;fecha_resolucion, const std::string &amp;estado_incidencia)</div><div class="ttdoc">Registra una incidencia relacionada con el suministro eléctrico de un hogar.</div><div class="ttdef"><b>Definition</b> GestionTransmisionDistribucion.cpp:273</div></div>
+<div class="ttc" id="aclassGestionTransmisionDistribucion_html_a8b739e6a0b9309652fe034de58f556a2"><div class="ttname"><a href="classGestionTransmisionDistribucion.html#a8b739e6a0b9309652fe034de58f556a2">GestionTransmisionDistribucion::listarHogares</a></div><div class="ttdeci">std::vector&lt; HogarInfo &gt; listarHogares(const std::string &amp;zona_geografica=&quot;&quot;, const std::string &amp;dni_cliente=&quot;&quot;, const std::string &amp;tipo_contrato=&quot;&quot;)</div><div class="ttdoc">Muestra el listado de hogares registrados, pudiendo filtrarse por zona geográfica,...</div><div class="ttdef"><b>Definition</b> GestionTransmisionDistribucion.cpp:111</div></div>
+<div class="ttc" id="aclassGestionTransmisionDistribucion_html_aa5c18c62306fd87f85c361748a9f0463"><div class="ttname"><a href="classGestionTransmisionDistribucion.html#aa5c18c62306fd87f85c361748a9f0463">GestionTransmisionDistribucion::altaHogar</a></div><div class="ttdeci">bool altaHogar(const std::string &amp;direccion, const std::string &amp;dni_cliente, int id_contrato, const std::string &amp;tipo_contrato=&quot;&quot;, const std::string &amp;zona_geografica=&quot;&quot;)</div><div class="ttdoc">Da de alta un nuevo hogar en el sistema.</div><div class="ttdef"><b>Definition</b> GestionTransmisionDistribucion.cpp:42</div></div>
+<div class="ttc" id="aclassGestionTransmisionDistribucion_html_acfcc4d6305ae68fd11d75f3a17ee3253"><div class="ttname"><a href="classGestionTransmisionDistribucion.html#acfcc4d6305ae68fd11d75f3a17ee3253">GestionTransmisionDistribucion::bajaHogar</a></div><div class="ttdeci">bool bajaHogar(const std::string &amp;direccion)</div><div class="ttdoc">Da de baja un hogar del sistema.</div><div class="ttdef"><b>Definition</b> GestionTransmisionDistribucion.cpp:78</div></div>
+<div class="ttc" id="astructDatosContrato_html"><div class="ttname"><a href="structDatosContrato.html">DatosContrato</a></div><div class="ttdef"><b>Definition</b> GestionTransmisionDistribucion.h:18</div></div>
+<div class="ttc" id="astructHogarInfo_html"><div class="ttname"><a href="structHogarInfo.html">HogarInfo</a></div><div class="ttdef"><b>Definition</b> GestionTransmisionDistribucion.h:11</div></div>
+</div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
 Generado por&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8

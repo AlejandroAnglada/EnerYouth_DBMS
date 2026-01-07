@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['_7econexionadb_0',['~ConexionADB',['../classConexionADB.html#abdbecfd590a5de40202a53f672c56edf',1,'ConexionADB']]]
+  ['finalizarcontrato_0',['finalizarContrato',['../classGestionClientes.html#aeb06ba0a83b7b5ba46eb07b05f36a688',1,'GestionClientes']]]
 ];
