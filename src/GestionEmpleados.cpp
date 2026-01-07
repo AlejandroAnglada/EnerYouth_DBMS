@@ -141,6 +141,7 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
         //Comprobar que la conexión esté establecida
         if (!conexion.isConnected()) {
             return false;
+        //Comprobar false;
         }
 
         SQLHDBC con = conexion.getConnection();
@@ -152,20 +153,36 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
         }
         // Damos de baja el empleado
         char empleado[2048];
+        
         std::string dni_empleado_esc = escapeSQLE(dni_empleado);
+        SQLRETURN ret;
+        
+        //Borrar Soluciona
+        sprintf(empleado, "DELETE FROM Soluciona WHERE DNI = '%s';", dni_empleado_esc.c_str());
+        ret = SQLExecDirectA(handler, (SQLCHAR*)empleado, SQL_NTS);
+        if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+            std::cout << "Error al borrar soluciona.\n";
+            mostrarErrorE(handler);
+            SQLFreeHandle(SQL_HANDLE_STMT, handler);
+            return false;
+        }
+        
+        //Borrar Empleado
         sprintf(empleado, "DELETE FROM Empleado WHERE DNI = '%s';", dni_empleado_esc.c_str());
-        SQLRETURN ret = SQLExecDirectA(handler, (SQLCHAR*)empleado, SQL_NTS);
+        ret = SQLExecDirectA(handler, (SQLCHAR*)empleado, SQL_NTS);
         if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
             std::cout << "Error al ejecutar la sentencia SQL para despedir al empleado.\n";
             mostrarErrorE(handler);
             SQLFreeHandle(SQL_HANDLE_STMT, handler);
             return false;
         }
+        
         // Liberamos recursos
         SQLFreeHandle(SQL_HANDLE_STMT, handler);
         return true;
 
     }  
+    
 
     /* ========================= RF-4.3 ========================= */
   
