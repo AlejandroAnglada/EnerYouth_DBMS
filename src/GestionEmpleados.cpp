@@ -141,7 +141,6 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
         //Comprobar que la conexión esté establecida
         if (!conexion.isConnected()) {
             return false;
-        //Comprobar false;
         }
 
         SQLHDBC con = conexion.getConnection();
@@ -158,9 +157,10 @@ GestionEmpleados::GestionEmpleados(ConexionADB& con)
         SQLRETURN ret;
         
         //Borrar Soluciona
+        
         sprintf(empleado, "DELETE FROM Soluciona WHERE DNI = '%s';", dni_empleado_esc.c_str());
         ret = SQLExecDirectA(handler, (SQLCHAR*)empleado, SQL_NTS);
-        if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
+        if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO && ret != SQL_NO_DATA) {
             std::cout << "Error al borrar soluciona.\n";
             mostrarErrorE(handler);
             SQLFreeHandle(SQL_HANDLE_STMT, handler);

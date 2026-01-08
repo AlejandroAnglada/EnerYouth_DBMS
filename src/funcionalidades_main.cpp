@@ -799,6 +799,7 @@ void crearTriggerVentas(ConexionADB &conexion, SQLHSTMT handler) {
 
 }
 
+
 void crearTriggerBloquearCesion(ConexionADB &conexion, SQLHSTMT handler) {
 
     // Creamos un trigger (disparador) que se ejecuta automáticamente cuando se modifica
